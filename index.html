@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ConnectPixel | Controle de Demandas</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:#071315;
+      --core:#132F33;
+      --card:rgba(255,255,255,.065);
+      --card2:rgba(255,255,255,.095);
+      --line:rgba(255,255,255,.12);
+      --text:#f7fffc;
+      --muted:rgba(247,255,252,.63);
+      --soft:rgba(247,255,252,.42);
+      --brand:#48e5c2;
+      --brand2:#b1fd64;
+      --danger:#ff6b6b;
+      --warning:#ffd166;
+      --success:#70e59b;
+      --title:'Space Grotesk',sans-serif;
+      --body:'Inter',sans-serif;
+      --shadow:0 24px 80px rgba(0,0,0,.28);
+    }
+
+    * { box-sizing:border-box; }
+    body {
+      margin:0;
+      min-height:100vh;
+      background:
+        radial-gradient(circle at 8% 5%, rgba(72,229,194,.22), transparent 28%),
+        radial-gradient(circle at 92% 8%, rgba(177,253,100,.10), transparent 24%),
+        radial-gradient(circle at 50% 100%, rgba(72,229,194,.12), transparent 32%),
+        var(--bg);
+      color:var(--text);
+      font-family:var(--body);
+    }
+
+    button,input,select,textarea { font-family:inherit; }
+    button { cursor:pointer; }
+    h1,h2,h3 { font-family:var(--title); margin:0; }
+    .app { width:min(1480px,calc(100% - 32px)); margin:0 auto; padding:32px 0 52px; }
+
+    .topbar {
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:24px;
+      align-items:center;
+      padding:28px;
+      border:1px solid var(--line);
+      border-radius:34px;
+      background:linear-gradient(135deg,rgba(255,255,255,.075),rgba(255,255,255,.035));
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(22px);
+      position:relative;
+      overflow:hidden;
+    }
+    .topbar:after {
+      content:"";
+      position:absolute;
+      right:-110px;
+      bottom:-150px;
+      width:390px;
+      height:390px;
+      border-radius:50%;
+      background:radial-gradient(circle,rgba(72,229,194,.22),transparent 65%);
+      pointer-events:none;
+    }
+    .eyebrow {
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border:1px solid rgba(72,229,194,.24);
+      border-radius:999px;
+      background:rgba(72,229,194,.09);
+      color:#bdfced;
+      font-size:11px;
+      font-weight:800;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+    }
+    .topbar h1 {
+      margin-top:16px;
+      max-width:850px;
+      font-size:clamp(32px,5vw,58px);
+      line-height:.98;
+      letter-spacing:-.055em;
+    }
+    .topbar p {
+      max-width:760px;
+      margin:18px 0 0;
+      color:var(--muted);
+      line-height:1.75;
+      font-size:15.5px;
+    }
+
+    svg {
+      width:18px;
+      height:18px;
+      stroke:currentColor;
+      stroke-width:2;
+      fill:none;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+      flex:0 0 auto;
+    }
+
+    .actions {
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      gap:10px;
+      position:relative;
+      z-index:2;
+    }
+    .btn {
+      min-height:46px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:9px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.065);
+      color:rgba(255,255,255,.82);
+      padding:0 16px;
+      font-size:13px;
+      font-weight:800;
+      transition:.18s ease;
+      text-decoration:none;
+      white-space:nowrap;
+    }
+    .btn:hover { transform:translateY(-1px); background:rgba(255,255,255,.105); color:#fff; }
+    .btn-primary {
+      border:0;
+      color:#071315;
+      background:linear-gradient(135deg,var(--brand2),var(--brand));
+      box-shadow:0 18px 36px rgba(72,229,194,.18);
+    }
+    .btn-primary:hover { background:linear-gradient(135deg,#c8ff82,#65f0d4); color:#071315; }
+    .hidden-input { display:none; }
+
+    .alert-box {
+      display:none;
+      margin:20px 0 0;
+      padding:18px;
+      border-radius:28px;
+      border:1px solid rgba(255,209,102,.26);
+      background:rgba(255,209,102,.095);
+      animation:fadeUp .32s ease both;
+    }
+    .alert-box.danger {
+      border-color:rgba(255,107,107,.30);
+      background:rgba(255,107,107,.11);
+    }
+    .alert-box.show {
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:18px;
+    }
+    .alert-content { display:flex; gap:14px; align-items:flex-start; }
+    .alert-icon {
+      width:46px;
+      height:46px;
+      border-radius:16px;
+      display:grid;
+      place-items:center;
+      background:rgba(255,255,255,.08);
+      border:1px solid var(--line);
+      color:var(--warning);
+    }
+    .alert-box.danger .alert-icon { color:#ffb1b1; }
+    .alert-box h3 { font-size:18px; letter-spacing:-.02em; }
+    .alert-box p { margin:6px 0 0; color:var(--muted); font-size:14px; line-height:1.6; }
+
+    .stats-grid {
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      gap:14px;
+      margin:20px 0;
+    }
+    .stat-card {
+      padding:20px;
+      min-height:148px;
+      border-radius:28px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.055);
+      box-shadow:0 18px 44px rgba(0,0,0,.13);
+      position:relative;
+      overflow:hidden;
+      animation:fadeUp .35s ease both;
+    }
+    .stat-card:after {
+      content:"";
+      position:absolute;
+      right:-65px;
+      bottom:-80px;
+      width:170px;
+      height:170px;
+      border-radius:999px;
+      background:rgba(72,229,194,.08);
+    }
+    .stat-top { display:flex; justify-content:space-between; gap:16px; position:relative; z-index:1; }
+    .stat-label { display:block; color:var(--soft); font-size:13px; font-weight:800; }
+    .stat-value {
+      display:block;
+      margin-top:10px;
+      font-family:var(--title);
+      font-size:36px;
+      font-weight:800;
+      line-height:1;
+      letter-spacing:-.05em;
+    }
+    .stat-helper { display:block; margin-top:12px; color:rgba(255,255,255,.45); font-size:12.5px; line-height:1.5; position:relative; z-index:1; }
+    .stat-icon {
+      width:44px;
+      height:44px;
+      border-radius:16px;
+      display:grid;
+      place-items:center;
+      color:#bdfced;
+      background:rgba(255,255,255,.07);
+      border:1px solid var(--line);
+    }
+    .stat-card.warning { border-color:rgba(255,209,102,.24); background:rgba(255,209,102,.085); }
+    .stat-card.danger { border-color:rgba(255,107,107,.24); background:rgba(255,107,107,.085); }
+    .stat-card.success { border-color:rgba(112,229,155,.2); background:rgba(112,229,155,.07); }
+
+    .filters {
+      display:grid;
+      grid-template-columns:1.5fr .8fr .8fr .7fr;
+      gap:12px;
+      padding:16px;
+      border:1px solid var(--line);
+      border-radius:28px;
+      background:rgba(255,255,255,.05);
+      margin-bottom:20px;
+    }
+    .field { position:relative; }
+    .field svg {
+      position:absolute;
+      left:15px;
+      top:50%;
+      transform:translateY(-50%);
+      color:rgba(255,255,255,.34);
+      pointer-events:none;
+    }
+    input,select,textarea {
+      width:100%;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.22);
+      color:#fff;
+      outline:0;
+      transition:.18s ease;
+    }
+    input,select { height:48px; border-radius:16px; padding:0 14px; }
+    .field input,.field select { padding-left:44px; }
+    textarea { min-height:112px; border-radius:18px; padding:14px; resize:vertical; line-height:1.6; }
+    input::placeholder,textarea::placeholder { color:rgba(255,255,255,.31); }
+    input:focus,select:focus,textarea:focus {
+      border-color:rgba(72,229,194,.45);
+      background:rgba(0,0,0,.30);
+      box-shadow:0 0 0 4px rgba(72,229,194,.075);
+    }
+    select option { color:#071315; }
+
+    .table-panel {
+      border:1px solid var(--line);
+      border-radius:34px;
+      background:rgba(255,255,255,.052);
+      overflow:hidden;
+      box-shadow:0 20px 70px rgba(0,0,0,.14);
+    }
+    .panel-header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      padding:22px;
+      border-bottom:1px solid var(--line);
+    }
+    .panel-header small { display:block; color:var(--soft); margin-bottom:6px; font-size:12px; font-weight:800; }
+    .panel-header h2 { font-size:26px; letter-spacing:-.035em; text-transform:capitalize; }
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; min-width:1160px; }
+    th,td { padding:15px 14px; text-align:left; vertical-align:middle; border-bottom:1px solid rgba(255,255,255,.08); }
+    th { background:rgba(0,0,0,.20); color:rgba(255,255,255,.38); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; font-weight:800; }
+    td { color:rgba(255,255,255,.72); font-size:13px; }
+    tr:hover td { background:rgba(255,255,255,.028); }
+
+    .client-name,.theme-title { color:#fff; font-weight:800; }
+    .theme-title { max-width:300px; line-height:1.45; }
+    .notes-text { margin-top:5px; color:rgba(255,255,255,.42); font-size:12px; line-height:1.45; max-width:330px; }
+    .pill {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:26px;
+      padding:0 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      color:rgba(255,255,255,.72);
+      font-size:11px;
+      font-weight:800;
+      white-space:nowrap;
+    }
+    .pill.success { color:#caffd8; border-color:rgba(112,229,155,.22); background:rgba(112,229,155,.09); }
+    .pill.warning { color:#ffedb0; border-color:rgba(255,209,102,.26); background:rgba(255,209,102,.10); }
+    .pill.danger { color:#ffc8c8; border-color:rgba(255,107,107,.25); background:rgba(255,107,107,.10); }
+    .pill.info { color:#bdfced; border-color:rgba(72,229,194,.22); background:rgba(72,229,194,.09); }
+    .date-sub { margin-top:5px; color:rgba(255,255,255,.4); font-size:11.5px; line-height:1.4; }
+    .date-sub.late { color:#ffc0c0; }
+    .row-actions { display:flex; gap:8px; align-items:center; }
+    .icon-btn {
+      width:38px;
+      height:38px;
+      display:grid;
+      place-items:center;
+      border-radius:13px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.055);
+      color:rgba(255,255,255,.72);
+      transition:.18s ease;
+    }
+    .icon-btn:hover { transform:translateY(-1px); background:rgba(255,255,255,.10); color:#fff; }
+    .icon-btn.success { color:#caffd8; border-color:rgba(112,229,155,.22); background:rgba(112,229,155,.085); }
+    .icon-btn.danger { color:#ffc8c8; border-color:rgba(255,107,107,.22); background:rgba(255,107,107,.085); }
+
+    .empty { display:none; padding:70px 20px; text-align:center; }
+    .empty.show { display:block; }
+    .empty-icon {
+      width:64px;
+      height:64px;
+      margin:0 auto 16px;
+      display:grid;
+      place-items:center;
+      border-radius:22px;
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--line);
+      color:rgba(255,255,255,.45);
+    }
+    .empty h3 { font-size:22px; letter-spacing:-.03em; }
+    .empty p { margin:8px auto 0; max-width:460px; color:var(--muted); line-height:1.65; }
+
+    .modal-backdrop {
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      background:rgba(0,0,0,.68);
+      backdrop-filter:blur(16px);
+      z-index:90;
+    }
+    .modal-backdrop.show { display:flex; animation:fadeIn .2s ease both; }
+    .modal {
+      width:min(920px,100%);
+      max-height:92vh;
+      overflow:auto;
+      border:1px solid var(--line);
+      border-radius:32px;
+      background:radial-gradient(circle at 85% 0%,rgba(72,229,194,.11),transparent 28%),#0b191b;
+      box-shadow:var(--shadow);
+      padding:24px;
+      animation:modalUp .24s ease both;
+    }
+    .modal-head { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin-bottom:22px; }
+    .modal-head small { color:#bdfced; font-size:11px; font-weight:800; letter-spacing:.20em; text-transform:uppercase; }
+    .modal-head h2 { margin-top:7px; font-size:28px; letter-spacing:-.04em; }
+    .form-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+    .form-group { display:flex; flex-direction:column; gap:8px; }
+    .form-group.full { grid-column:1/-1; }
+    label { color:rgba(255,255,255,.62); font-size:13px; font-weight:800; }
+    .modal-actions { grid-column:1/-1; display:flex; justify-content:flex-end; gap:10px; padding-top:8px; }
+    .settings-note { grid-column:1/-1; padding:18px; border:1px solid var(--line); border-radius:22px; background:rgba(255,255,255,.055); }
+    .settings-note h3 { font-size:18px; letter-spacing:-.02em; }
+    .settings-note p { margin:8px 0 0; color:var(--muted); line-height:1.7; font-size:14px; }
+
+    .mobile-cards { display:none; padding:14px; gap:12px; }
+    .demand-card { border:1px solid var(--line); background:rgba(255,255,255,.045); border-radius:24px; padding:16px; }
+    .demand-card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:12px; }
+    .demand-card h3 { font-size:17px; letter-spacing:-.02em; line-height:1.35; }
+    .demand-card .client { margin-bottom:6px; color:#bdfced; font-size:12px; font-weight:800; }
+    .card-meta { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:14px; }
+    .meta-box { padding:12px; border-radius:16px; background:rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.07); }
+    .meta-box small { display:block; margin-bottom:5px; color:rgba(255,255,255,.35); font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+    .meta-box span { color:rgba(255,255,255,.78); font-size:12.5px; font-weight:700; }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    @keyframes modalUp { from{opacity:0;transform:translateY(16px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+
+
+    /* Refinamentos visuais e microinterações */
+    .btn,
+    .icon-btn,
+    .stat-card,
+    .demand-card,
+    .table-panel,
+    .filters,
+    .topbar,
+    .modal,
+    input,
+    textarea,
+    .custom-select-trigger {
+      will-change: transform;
+    }
+
+    .btn {
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .btn::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      transform: translateX(-115%);
+      background: linear-gradient(110deg, transparent, rgba(255,255,255,.22), transparent);
+      transition: transform .55s cubic-bezier(.2,.8,.2,1);
+      z-index: -1;
+    }
+
+    .btn:hover::after {
+      transform: translateX(115%);
+    }
+
+    .btn:active,
+    .icon-btn:active {
+      transform: translateY(0) scale(.98);
+    }
+
+    .btn-primary::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(255,255,255,.34), transparent 45%);
+      opacity: .55;
+      pointer-events: none;
+    }
+
+    .topbar {
+      animation: heroReveal .55s cubic-bezier(.2,.8,.2,1) both;
+    }
+
+    .stat-card {
+      transition: transform .24s cubic-bezier(.2,.8,.2,1), border-color .24s ease, background .24s ease, box-shadow .24s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(72,229,194,.24);
+      background: rgba(255,255,255,.075);
+      box-shadow: 0 26px 70px rgba(0,0,0,.18);
+    }
+
+    .table-panel,
+    .filters {
+      animation: fadeUp .42s cubic-bezier(.2,.8,.2,1) both;
+    }
+
+    tbody tr {
+      animation: rowReveal .28s ease both;
+    }
+
+    tbody tr td {
+      transition: background .18s ease, transform .18s ease;
+    }
+
+    tbody tr:hover td:first-child {
+      box-shadow: inset 3px 0 0 rgba(72,229,194,.72);
+    }
+
+    .demand-card {
+      animation: fadeUp .28s ease both;
+      transition: transform .22s ease, border-color .22s ease, background .22s ease;
+    }
+
+    .demand-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(72,229,194,.25);
+      background: rgba(255,255,255,.065);
+    }
+
+    input:hover,
+    textarea:hover {
+      border-color: rgba(255,255,255,.2);
+      background: rgba(0,0,0,.27);
+    }
+
+    .native-hidden {
+      position: absolute !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      width: 1px !important;
+      height: 1px !important;
+    }
+
+    .custom-select {
+      position: relative;
+      width: 100%;
+      z-index: 1;
+    }
+
+    .custom-select.is-open {
+      z-index: 80;
+    }
+
+    .custom-select-trigger {
+      min-height: 48px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.035)), rgba(0,0,0,.22);
+      color: #fff;
+      padding: 0 14px;
+      font-size: 13px;
+      font-weight: 750;
+      text-align: left;
+      transition: border-color .18s ease, background .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+
+    .field .custom-select-trigger {
+      padding-left: 44px;
+    }
+
+    .custom-select-trigger:hover {
+      transform: translateY(-1px);
+      border-color: rgba(72,229,194,.26);
+      background: linear-gradient(180deg, rgba(255,255,255,.095), rgba(255,255,255,.045)), rgba(0,0,0,.26);
+    }
+
+    .custom-select.is-open .custom-select-trigger {
+      border-color: rgba(72,229,194,.52);
+      box-shadow: 0 0 0 4px rgba(72,229,194,.08);
+    }
+
+    .custom-select-trigger .chevron {
+      width: 18px;
+      height: 18px;
+      color: rgba(255,255,255,.55);
+      transition: transform .18s ease, color .18s ease;
+    }
+
+    .custom-select.is-open .chevron {
+      transform: rotate(180deg);
+      color: var(--brand);
+    }
+
+    .custom-options {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      display: none;
+      padding: 7px;
+      border-radius: 18px;
+      border: 1px solid rgba(72,229,194,.18);
+      background: radial-gradient(circle at 85% 0%, rgba(72,229,194,.13), transparent 36%), rgba(8,25,27,.98);
+      box-shadow: 0 22px 55px rgba(0,0,0,.35);
+      backdrop-filter: blur(20px);
+      max-height: 248px;
+      overflow: auto;
+      animation: dropdownReveal .18s ease both;
+    }
+
+    .custom-select.is-open .custom-options {
+      display: grid;
+      gap: 4px;
+    }
+
+    .custom-option {
+      width: 100%;
+      min-height: 38px;
+      border: 0;
+      border-radius: 13px;
+      background: transparent;
+      color: rgba(255,255,255,.75);
+      padding: 0 11px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: left;
+      transition: background .16s ease, color .16s ease, transform .16s ease;
+    }
+
+    .custom-option:hover {
+      color: #fff;
+      background: rgba(255,255,255,.08);
+      transform: translateX(2px);
+    }
+
+    .custom-option.is-selected {
+      color: #071315;
+      background: linear-gradient(135deg, var(--brand2), var(--brand));
+    }
+
+    .custom-option.is-selected::after {
+      content: "✓";
+      font-weight: 900;
+    }
+
+    @keyframes heroReveal {
+      from { opacity: 0; transform: translateY(12px) scale(.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes rowReveal {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes dropdownReveal {
+      from { opacity: 0; transform: translateY(-6px) scale(.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    @media (max-width:1180px) {
+      .topbar { grid-template-columns:1fr; }
+      .actions { justify-content:flex-start; }
+      .stats-grid { grid-template-columns:repeat(2,1fr); }
+      .filters { grid-template-columns:repeat(2,1fr); }
+    }
+    @media (max-width:760px) {
+      .app { width:min(100% - 22px,1480px); padding-top:14px; }
+      .topbar,.table-panel,.filters,.stat-card,.alert-box,.modal { border-radius:24px; }
+      .topbar { padding:20px; }
+      .actions { display:grid; grid-template-columns:1fr 1fr; width:100%; }
+      .btn { width:100%; padding-inline:10px; }
+      .stats-grid,.filters,.form-grid { grid-template-columns:1fr; }
+      .panel-header,.alert-box.show { flex-direction:column; align-items:stretch; }
+      .table-wrap { display:none; }
+      .mobile-cards { display:grid; }
+      .modal-actions { flex-direction:column-reverse; }
+      .card-meta { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <span class="eyebrow">
+          <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h16"/></svg>
+          Controle de produção
+        </span>
+        <h1>Painel de demandas da ConnectPixel</h1>
+        <p>Registre conteúdos pedidos, prazos originais, entregas realizadas e acompanhe se a produção do mês está dentro do limite que você definiu para a equipe.</p>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="openCreateBtn">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Nova demanda
+        </button>
+        <button class="btn" id="openSettingsBtn">
+          <svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8.92 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.43.48.76.9.91.15.06.31.09.47.09H21a2 2 0 0 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15Z"/></svg>
+          Limite mensal
+        </button>
+        <button class="btn" id="exportCsvBtn">
+          <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+          CSV
+        </button>
+        <button class="btn" id="exportBackupBtn">
+          <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
+          Backup
+        </button>
+        <label class="btn">
+          <svg viewBox="0 0 24 24"><path d="M12 21V9"/><path d="m7 14 5-5 5 5"/><path d="M5 3h14"/></svg>
+          Importar
+          <input class="hidden-input" type="file" id="importBackupInput" accept="application/json">
+        </label>
+      </div>
+    </header>
+
+    <section class="alert-box" id="demandAlert">
+      <div class="alert-content">
+        <div class="alert-icon">
+          <svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        </div>
+        <div>
+          <h3 id="alertTitle">Atenção ao volume do mês</h3>
+          <p id="alertText"></p>
+        </div>
+      </div>
+      <button class="btn" id="alertSettingsBtn">Ajustar limite</button>
+    </section>
+
+    <section class="stats-grid">
+      <article class="stat-card" id="statDemandCard">
+        <div class="stat-top">
+          <div>
+            <span class="stat-label">Demandas no período</span>
+            <span class="stat-value" id="statTotal">0</span>
+          </div>
+          <span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></span>
+        </div>
+        <span class="stat-helper" id="statLimit">0% do limite mensal</span>
+      </article>
+
+      <article class="stat-card success">
+        <div class="stat-top">
+          <div>
+            <span class="stat-label">Entregues</span>
+            <span class="stat-value" id="statDelivered">0</span>
+          </div>
+          <span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span>
+        </div>
+        <span class="stat-helper">Conteúdos finalizados</span>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-top">
+          <div>
+            <span class="stat-label">Em andamento</span>
+            <span class="stat-value" id="statProgress">0</span>
+          </div>
+          <span class="stat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+        </div>
+        <span class="stat-helper">Pendentes ou em produção</span>
+      </article>
+
+      <article class="stat-card" id="statLateCard">
+        <div class="stat-top">
+          <div>
+            <span class="stat-label">Com atraso</span>
+            <span class="stat-value" id="statLate">0</span>
+          </div>
+          <span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>
+        </div>
+        <span class="stat-helper">Entregues ou abertas fora do prazo</span>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-top">
+          <div>
+            <span class="stat-label">Média de entrega</span>
+            <span class="stat-value" id="statAverage">0d</span>
+          </div>
+          <span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><path d="M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/></svg></span>
+        </div>
+        <span class="stat-helper">Do pedido até a entrega</span>
+      </article>
+    </section>
+
+    <section class="filters">
+      <div class="field">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="search" id="searchInput" placeholder="Buscar por cliente, tema, responsável ou observação...">
+      </div>
+      <div class="field">
+        <svg viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><path d="M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/></svg>
+        <select id="monthFilter"></select>
+      </div>
+      <div class="field">
+        <svg viewBox="0 0 24 24"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+        <select id="clientFilter"></select>
+      </div>
+      <select id="statusFilter">
+        <option value="todos">Todos os status</option>
+        <option value="Pendente">Pendente</option>
+        <option value="Em produção">Em produção</option>
+        <option value="Entregue">Entregue</option>
+        <option value="Atrasado">Atrasado</option>
+      </select>
+    </section>
+
+    <section class="table-panel">
+      <div class="panel-header">
+        <div>
+          <small>Período selecionado</small>
+          <h2 id="periodTitle">Mês atual</h2>
+        </div>
+        <button class="btn" id="clearFiltersBtn">
+          <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+          Limpar filtros
+        </button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Tema</th>
+              <th>Formato</th>
+              <th>Responsável</th>
+              <th>Pedido</th>
+              <th>Prazo</th>
+              <th>Entrega</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="mobile-cards" id="mobileCards"></div>
+
+      <div class="empty" id="emptyState">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </div>
+        <h3>Nenhuma demanda encontrada</h3>
+        <p>Ajuste os filtros ou cadastre uma nova demanda para começar a acompanhar a produção da equipe.</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="demandModal">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <small>ConnectPixel</small>
+          <h2 id="demandModalTitle">Nova demanda</h2>
+        </div>
+        <button class="icon-btn" type="button" id="closeDemandModal" aria-label="Fechar">
+          <svg viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form class="form-grid" id="demandForm">
+        <input type="hidden" id="itemId">
+
+        <div class="form-group">
+          <label for="clientInput">Nome do cliente</label>
+          <input id="clientInput" required placeholder="Ex: Ship7 Informática">
+        </div>
+
+        <div class="form-group">
+          <label for="formatInput">Formato do conteúdo</label>
+          <select id="formatInput">
+            <option>Arte única</option>
+            <option>Carrossel</option>
+            <option>Reels</option>
+            <option>Vídeo</option>
+            <option>Story</option>
+            <option>Capa</option>
+            <option>Outro</option>
+          </select>
+        </div>
+
+        <div class="form-group full">
+          <label for="themeInput">Tema da arte/vídeo/conteúdo</label>
+          <input id="themeInput" required placeholder="Ex: Reels promocional de Dia das Mães">
+        </div>
+
+        <div class="form-group">
+          <label for="responsibleInput">Responsável</label>
+          <select id="responsibleInput">
+            <option>Lucas Alves</option>
+            <option>Bruno Rocha</option>
+            <option>Designer</option>
+            <option>Editor de vídeos</option>
+            <option>Equipe</option>
+            <option>Outro</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="priorityInput">Prioridade</label>
+          <select id="priorityInput">
+            <option>Baixa</option>
+            <option selected>Normal</option>
+            <option>Alta</option>
+            <option>Urgente</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="requestedDateInput">Data em que foi pedida</label>
+          <input id="requestedDateInput" type="date">
+        </div>
+
+        <div class="form-group">
+          <label for="deadlineInput">Prazo original de entrega</label>
+          <input id="deadlineInput" type="date">
+        </div>
+
+        <div class="form-group">
+          <label for="deliveredDateInput">Data em que foi entregue</label>
+          <input id="deliveredDateInput" type="date">
+        </div>
+
+        <div class="form-group">
+          <label for="statusInput">Status</label>
+          <select id="statusInput">
+            <option>Pendente</option>
+            <option selected>Em produção</option>
+            <option>Entregue</option>
+          </select>
+        </div>
+
+        <div class="form-group full">
+          <label for="notesInput">Observações</label>
+          <textarea id="notesInput" placeholder="Ex: briefing incompleto, cliente pediu alteração, atrasou por aprovação etc."></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn" type="button" id="cancelDemandBtn">Cancelar</button>
+          <button class="btn btn-primary" type="submit">Salvar demanda</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <small>Configurações</small>
+          <h2>Limite de demanda mensal</h2>
+        </div>
+        <button class="icon-btn" type="button" id="closeSettingsModal" aria-label="Fechar">
+          <svg viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form class="form-grid" id="settingsForm">
+        <div class="form-group">
+          <label for="agencyNameInput">Nome da agência</label>
+          <input id="agencyNameInput" placeholder="ConnectPixel">
+        </div>
+
+        <div class="form-group">
+          <label for="monthlyLimitInput">Limite máximo de demandas no mês</label>
+          <input id="monthlyLimitInput" type="number" min="1" placeholder="80">
+        </div>
+
+        <div class="settings-note">
+          <h3>Como o alerta funciona</h3>
+          <p>Ao selecionar um mês, o painel compara a quantidade de demandas registradas com o limite definido. Chegando em 85%, ele exibe um aviso preventivo. Ao bater ou passar o limite, o alerta fica crítico.</p>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn" type="button" id="cancelSettingsBtn">Cancelar</button>
+          <button class="btn btn-primary" type="submit">Salvar configurações</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'connectpixel_content_tracker_html_v1';
+    const SETTINGS_KEY = 'connectpixel_content_settings_html_v1';
+    const today = new Date().toISOString().slice(0, 10);
+
+    let settings = loadSettings();
+    let items = loadItems();
+    let filters = { search:'', month:getMonthKey(today), client:'todos', status:'todos' };
+
+    const icons = {
+      check:'<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>',
+      edit:'<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg>',
+      trash:'<svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>'
+    };
+
+    const els = {
+      openCreateBtn:document.getElementById('openCreateBtn'),
+      openSettingsBtn:document.getElementById('openSettingsBtn'),
+      alertSettingsBtn:document.getElementById('alertSettingsBtn'),
+      exportCsvBtn:document.getElementById('exportCsvBtn'),
+      exportBackupBtn:document.getElementById('exportBackupBtn'),
+      importBackupInput:document.getElementById('importBackupInput'),
+      searchInput:document.getElementById('searchInput'),
+      monthFilter:document.getElementById('monthFilter'),
+      clientFilter:document.getElementById('clientFilter'),
+      statusFilter:document.getElementById('statusFilter'),
+      clearFiltersBtn:document.getElementById('clearFiltersBtn'),
+      tableBody:document.getElementById('tableBody'),
+      mobileCards:document.getElementById('mobileCards'),
+      emptyState:document.getElementById('emptyState'),
+      periodTitle:document.getElementById('periodTitle'),
+      demandAlert:document.getElementById('demandAlert'),
+      alertTitle:document.getElementById('alertTitle'),
+      alertText:document.getElementById('alertText'),
+      statDemandCard:document.getElementById('statDemandCard'),
+      statLateCard:document.getElementById('statLateCard'),
+      statTotal:document.getElementById('statTotal'),
+      statDelivered:document.getElementById('statDelivered'),
+      statProgress:document.getElementById('statProgress'),
+      statLate:document.getElementById('statLate'),
+      statAverage:document.getElementById('statAverage'),
+      statLimit:document.getElementById('statLimit'),
+      demandModal:document.getElementById('demandModal'),
+      demandModalTitle:document.getElementById('demandModalTitle'),
+      closeDemandModal:document.getElementById('closeDemandModal'),
+      cancelDemandBtn:document.getElementById('cancelDemandBtn'),
+      demandForm:document.getElementById('demandForm'),
+      itemId:document.getElementById('itemId'),
+      clientInput:document.getElementById('clientInput'),
+      formatInput:document.getElementById('formatInput'),
+      themeInput:document.getElementById('themeInput'),
+      responsibleInput:document.getElementById('responsibleInput'),
+      priorityInput:document.getElementById('priorityInput'),
+      requestedDateInput:document.getElementById('requestedDateInput'),
+      deadlineInput:document.getElementById('deadlineInput'),
+      deliveredDateInput:document.getElementById('deliveredDateInput'),
+      statusInput:document.getElementById('statusInput'),
+      notesInput:document.getElementById('notesInput'),
+      settingsModal:document.getElementById('settingsModal'),
+      closeSettingsModal:document.getElementById('closeSettingsModal'),
+      cancelSettingsBtn:document.getElementById('cancelSettingsBtn'),
+      settingsForm:document.getElementById('settingsForm'),
+      agencyNameInput:document.getElementById('agencyNameInput'),
+      monthlyLimitInput:document.getElementById('monthlyLimitInput')
+    };
+
+    function loadSettings() {
+      const fallback = { agencyName:'ConnectPixel', monthlyLimit:80 };
+      try { return { ...fallback, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') }; }
+      catch { return fallback; }
+    }
+
+    function loadItems() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        if (Array.isArray(saved) && saved.length) return saved;
+      } catch {}
+      return [
+        {
+          id:generateId(),
+          client:'Ship7 Informática',
+          theme:'Carrossel de ofertas — periféricos gamer',
+          format:'Carrossel',
+          responsible:'Lucas Alves',
+          requestedDate:today,
+          originalDeadline:today,
+          deliveredDate:'',
+          status:'Em produção',
+          priority:'Normal',
+          notes:'Modelo inicial. Pode editar ou excluir.'
+        },
+        {
+          id:generateId(),
+          client:'FontNet',
+          theme:'Reels institucional — aniversário da cidade',
+          format:'Reels',
+          responsible:'Bruno Rocha',
+          requestedDate:today,
+          originalDeadline:today,
+          deliveredDate:today,
+          status:'Entregue',
+          priority:'Alta',
+          notes:'Exemplo entregue no prazo.'
+        }
+      ];
+    }
+
+    function saveItems(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }
+    function saveSettings(){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+    function generateId(){ return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'id_' + Date.now() + '_' + Math.random().toString(16).slice(2); }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#039;");
+    }
+
+    function getMonthKey(dateString){ if(!dateString) return 'sem-data'; return dateString.slice(0,7); }
+    function formatMonthLabel(monthKey){
+      if(!monthKey || monthKey === 'todos') return 'Todos os meses';
+      const parts = monthKey.split('-');
+      const date = new Date(Number(parts[0]), Number(parts[1])-1, 1);
+      return date.toLocaleDateString('pt-BR', { month:'long', year:'numeric' });
+    }
+    function formatDate(dateString){ if(!dateString) return '—'; return new Date(dateString + 'T00:00:00').toLocaleDateString('pt-BR'); }
+    function daysBetween(start,end){
+      if(!start || !end) return null;
+      const startDate = new Date(start + 'T00:00:00');
+      const endDate = new Date(end + 'T00:00:00');
+      return Math.round((endDate - startDate) / (1000*60*60*24));
+    }
+    function isLate(item){
+      if(!item.originalDeadline) return false;
+      const referenceDate = item.deliveredDate || today;
+      return new Date(referenceDate + 'T00:00:00') > new Date(item.originalDeadline + 'T00:00:00');
+    }
+    function visibleStatus(item){ return isLate(item) && item.status !== 'Entregue' ? 'Atrasado' : item.status; }
+    function pillClass(value){
+      if(value === 'Entregue') return 'success';
+      if(value === 'Atrasado' || value === 'Urgente') return 'danger';
+      if(value === 'Alta') return 'warning';
+      if(value === 'Em produção') return 'info';
+      return '';
+    }
+
+    function filteredItems(){
+      return items.filter(item => {
+        const baseDate = item.deliveredDate || item.requestedDate;
+        const matchesMonth = filters.month === 'todos' || getMonthKey(baseDate) === filters.month;
+        const matchesClient = filters.client === 'todos' || item.client === filters.client;
+        const matchesStatus = filters.status === 'todos' || visibleStatus(item) === filters.status;
+        const searchText = `${item.client} ${item.theme} ${item.format} ${item.responsible} ${item.notes}`.toLowerCase();
+        const matchesSearch = !filters.search || searchText.includes(filters.search.toLowerCase());
+        return matchesMonth && matchesClient && matchesStatus && matchesSearch;
+      }).sort((a,b) => new Date((b.requestedDate || '1900-01-01') + 'T00:00:00') - new Date((a.requestedDate || '1900-01-01') + 'T00:00:00'));
+    }
+
+    function statsBaseItems(){
+      if(filters.month === 'todos') return items;
+      return items.filter(item => getMonthKey(item.deliveredDate || item.requestedDate) === filters.month);
+    }
+
+    function calculateStats(){
+      const base = statsBaseItems();
+      const delivered = base.filter(item => item.status === 'Entregue');
+      const progress = base.filter(item => item.status !== 'Entregue');
+      const late = base.filter(item => isLate(item));
+      const leadTimes = delivered.map(item => daysBetween(item.requestedDate, item.deliveredDate)).filter(day => typeof day === 'number' && !Number.isNaN(day));
+      const average = leadTimes.length ? Math.round((leadTimes.reduce((sum,day)=>sum+day,0) / leadTimes.length) * 10) / 10 : 0;
+      const limitPercent = settings.monthlyLimit ? Math.round((base.length / settings.monthlyLimit) * 100) : 0;
+      return { total:base.length, delivered:delivered.length, progress:progress.length, late:late.length, average, limitPercent };
+    }
+
+    function renderFilters(){
+      const months = [...new Set(items.map(item => getMonthKey(item.deliveredDate || item.requestedDate)).filter(month => month !== 'sem-data'))];
+      if(!months.includes(getMonthKey(today))) months.push(getMonthKey(today));
+      months.sort().reverse();
+
+      els.monthFilter.innerHTML = `<option value="todos">Todos os meses</option>` + months.map(month => `<option value="${month}">${formatMonthLabel(month)}</option>`).join('');
+      els.monthFilter.value = filters.month;
+
+      const clients = [...new Set(items.map(item => item.client).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+      els.clientFilter.innerHTML = `<option value="todos">Todos os clientes</option>` + clients.map(client => `<option value="${escapeHtml(client)}">${escapeHtml(client)}</option>`).join('');
+      els.clientFilter.value = filters.client;
+    }
+
+    function renderStats(){
+      const stats = calculateStats();
+      const isSpecificMonth = filters.month !== 'todos';
+      const reachedLimit = isSpecificMonth && stats.total >= settings.monthlyLimit;
+      const nearLimit = isSpecificMonth && stats.total >= settings.monthlyLimit * .85 && stats.total < settings.monthlyLimit;
+
+      els.statTotal.textContent = stats.total;
+      els.statDelivered.textContent = stats.delivered;
+      els.statProgress.textContent = stats.progress;
+      els.statLate.textContent = stats.late;
+      els.statAverage.textContent = `${stats.average}d`;
+      els.statLimit.textContent = `${stats.limitPercent}% do limite mensal de ${settings.monthlyLimit}`;
+      els.periodTitle.textContent = formatMonthLabel(filters.month);
+
+      els.statDemandCard.classList.toggle('danger', reachedLimit);
+      els.statDemandCard.classList.toggle('warning', nearLimit);
+      els.statLateCard.classList.toggle('danger', stats.late > 0);
+
+      els.demandAlert.classList.remove('show','danger');
+      if(reachedLimit || nearLimit){
+        els.demandAlert.classList.add('show');
+        if(reachedLimit) els.demandAlert.classList.add('danger');
+        els.alertTitle.textContent = reachedLimit ? 'Limite mensal ultrapassado' : 'Mês perto do limite de produção';
+        els.alertText.textContent = `${formatMonthLabel(filters.month)} está com ${stats.total} demandas registradas de um limite de ${settings.monthlyLimit}. Use isso para reorganizar prazos, redistribuir tarefas ou controlar novas entradas.`;
+      }
+    }
+
+    function renderRows(){
+      const list = filteredItems();
+      els.tableBody.innerHTML = '';
+      els.mobileCards.innerHTML = '';
+      els.emptyState.classList.toggle('show', list.length === 0);
+
+      list.forEach(item => {
+        const status = visibleStatus(item);
+        const late = isLate(item);
+        const deliveryTime = daysBetween(item.requestedDate, item.deliveredDate);
+        const lateDays = item.deliveredDate ? Math.max(0, daysBetween(item.originalDeadline, item.deliveredDate) || 0) : Math.max(0, daysBetween(item.originalDeadline, today) || 0);
+        const deliveryInfo = item.deliveredDate ? `${deliveryTime ?? 0} dia(s) para entregar${lateDays ? ` · ${lateDays} dia(s) atraso` : ''}` : late ? `${lateDays} dia(s) em atraso` : 'Ainda não entregue';
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><div class="client-name">${escapeHtml(item.client)}</div></td>
+          <td>
+            <div class="theme-title">${escapeHtml(item.theme)}</div>
+            ${item.notes ? `<div class="notes-text">${escapeHtml(item.notes)}</div>` : ''}
+          </td>
+          <td>${escapeHtml(item.format)}</td>
+          <td>${escapeHtml(item.responsible)}</td>
+          <td>${formatDate(item.requestedDate)}</td>
+          <td>${formatDate(item.originalDeadline)}</td>
+          <td>
+            ${formatDate(item.deliveredDate)}
+            <div class="date-sub ${late ? 'late' : ''}">${escapeHtml(deliveryInfo)}</div>
+          </td>
+          <td>
+            <span class="pill ${pillClass(status)}">${escapeHtml(status)}</span>
+            <span class="pill ${pillClass(item.priority)}" style="margin-left:6px;">${escapeHtml(item.priority)}</span>
+          </td>
+          <td>
+            <div class="row-actions">
+              ${item.status !== 'Entregue' ? `<button class="icon-btn success" data-action="delivered" data-id="${item.id}" title="Marcar como entregue">${icons.check}</button>` : ''}
+              <button class="icon-btn" data-action="edit" data-id="${item.id}" title="Editar">${icons.edit}</button>
+              <button class="icon-btn danger" data-action="delete" data-id="${item.id}" title="Excluir">${icons.trash}</button>
+            </div>
+          </td>
+        `;
+        els.tableBody.appendChild(row);
+
+        const card = document.createElement('article');
+        card.className = 'demand-card';
+        card.innerHTML = `
+          <div class="demand-card-head">
+            <div>
+              <div class="client">${escapeHtml(item.client)}</div>
+              <h3>${escapeHtml(item.theme)}</h3>
+            </div>
+            <span class="pill ${pillClass(status)}">${escapeHtml(status)}</span>
+          </div>
+          ${item.notes ? `<div class="notes-text">${escapeHtml(item.notes)}</div>` : ''}
+          <div class="card-meta">
+            <div class="meta-box"><small>Formato</small><span>${escapeHtml(item.format)}</span></div>
+            <div class="meta-box"><small>Responsável</small><span>${escapeHtml(item.responsible)}</span></div>
+            <div class="meta-box"><small>Pedido</small><span>${formatDate(item.requestedDate)}</span></div>
+            <div class="meta-box"><small>Prazo</small><span>${formatDate(item.originalDeadline)}</span></div>
+            <div class="meta-box"><small>Entrega</small><span>${formatDate(item.deliveredDate)}</span></div>
+            <div class="meta-box"><small>Tempo</small><span>${escapeHtml(deliveryInfo)}</span></div>
+          </div>
+          <div class="row-actions" style="margin-top:14px;">
+            ${item.status !== 'Entregue' ? `<button class="icon-btn success" data-action="delivered" data-id="${item.id}" title="Marcar como entregue">${icons.check}</button>` : ''}
+            <button class="icon-btn" data-action="edit" data-id="${item.id}" title="Editar">${icons.edit}</button>
+            <button class="icon-btn danger" data-action="delete" data-id="${item.id}" title="Excluir">${icons.trash}</button>
+          </div>
+        `;
+        els.mobileCards.appendChild(card);
+      });
+    }
+
+
+    function refreshCustomSelect(select){
+      const wrapper = select.closest('.custom-select');
+      if(!wrapper) return;
+      const trigger = wrapper.querySelector('.custom-select-trigger');
+      const options = wrapper.querySelector('.custom-options');
+      if(!trigger || !options) return;
+
+      const selectedText = select.options[select.selectedIndex]?.text || 'Selecionar';
+      trigger.querySelector('.custom-select-value').textContent = selectedText;
+      options.innerHTML = '';
+
+      Array.from(select.options).forEach(option => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'custom-option';
+        if(option.value === select.value) button.classList.add('is-selected');
+        button.textContent = option.text;
+        button.dataset.value = option.value;
+
+        button.addEventListener('click', () => {
+          select.value = option.value;
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+          wrapper.classList.remove('is-open');
+          refreshCustomSelect(select);
+        });
+
+        options.appendChild(button);
+      });
+    }
+
+    function refreshAllCustomSelects(){
+      document.querySelectorAll('select').forEach(refreshCustomSelect);
+    }
+
+    function initCustomSelects(){
+      document.querySelectorAll('select').forEach(select => {
+        if(select.dataset.customReady === 'true') return;
+        select.dataset.customReady = 'true';
+        select.classList.add('native-hidden');
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'custom-select';
+        wrapper.dataset.for = select.id || '';
+
+        const trigger = document.createElement('button');
+        trigger.type = 'button';
+        trigger.className = 'custom-select-trigger';
+        trigger.innerHTML = `<span class="custom-select-value"></span><svg class="chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>`;
+
+        const options = document.createElement('div');
+        options.className = 'custom-options';
+
+        select.parentNode.insertBefore(wrapper, select);
+        wrapper.appendChild(select);
+        wrapper.appendChild(trigger);
+        wrapper.appendChild(options);
+
+        trigger.addEventListener('click', event => {
+          event.stopPropagation();
+          document.querySelectorAll('.custom-select.is-open').forEach(openSelect => {
+            if(openSelect !== wrapper) openSelect.classList.remove('is-open');
+          });
+          wrapper.classList.toggle('is-open');
+          refreshCustomSelect(select);
+        });
+
+        select.addEventListener('change', () => refreshCustomSelect(select));
+        refreshCustomSelect(select);
+      });
+    }
+
+    document.addEventListener('click', event => {
+      if(!event.target.closest('.custom-select')){
+        document.querySelectorAll('.custom-select.is-open').forEach(select => select.classList.remove('is-open'));
+      }
+    });
+
+    function render(){ renderFilters(); renderStats(); renderRows(); refreshAllCustomSelects(); }
+
+    function openDemandModal(item = null){
+      els.demandForm.reset();
+      if(item){
+        els.demandModalTitle.textContent = 'Editar demanda';
+        els.itemId.value = item.id;
+        els.clientInput.value = item.client;
+        els.formatInput.value = item.format;
+        els.themeInput.value = item.theme;
+        els.responsibleInput.value = item.responsible;
+        els.priorityInput.value = item.priority;
+        els.requestedDateInput.value = item.requestedDate;
+        els.deadlineInput.value = item.originalDeadline;
+        els.deliveredDateInput.value = item.deliveredDate;
+        els.statusInput.value = item.status;
+        els.notesInput.value = item.notes;
+      } else {
+        els.demandModalTitle.textContent = 'Nova demanda';
+        els.itemId.value = '';
+        els.formatInput.value = 'Arte única';
+        els.responsibleInput.value = 'Lucas Alves';
+        els.priorityInput.value = 'Normal';
+        els.requestedDateInput.value = today;
+        els.deadlineInput.value = today;
+        els.deliveredDateInput.value = '';
+        els.statusInput.value = 'Em produção';
+      }
+      els.demandModal.classList.add('show');
+    }
+    function closeDemandModal(){ els.demandModal.classList.remove('show'); }
+    function openSettingsModal(){
+      els.agencyNameInput.value = settings.agencyName;
+      els.monthlyLimitInput.value = settings.monthlyLimit;
+      els.settingsModal.classList.add('show');
+    }
+    function closeSettingsModal(){ els.settingsModal.classList.remove('show'); }
+
+    function saveDemand(event){
+      event.preventDefault();
+      const item = {
+        id: els.itemId.value || generateId(),
+        client: els.clientInput.value.trim(),
+        theme: els.themeInput.value.trim(),
+        format: els.formatInput.value,
+        responsible: els.responsibleInput.value,
+        requestedDate: els.requestedDateInput.value,
+        originalDeadline: els.deadlineInput.value,
+        deliveredDate: els.deliveredDateInput.value,
+        status: els.statusInput.value,
+        priority: els.priorityInput.value,
+        notes: els.notesInput.value.trim()
+      };
+
+      if(!item.client || !item.theme) return;
+      if(item.deliveredDate && item.status !== 'Entregue') item.status = 'Entregue';
+
+      const exists = items.some(current => current.id === item.id);
+      items = exists ? items.map(current => current.id === item.id ? item : current) : [item, ...items];
+
+      saveItems();
+      closeDemandModal();
+      render();
+    }
+
+    function handleActionClick(event){
+      const button = event.target.closest('[data-action]');
+      if(!button) return;
+
+      const id = button.dataset.id;
+      const action = button.dataset.action;
+      const item = items.find(current => current.id === id);
+      if(!item) return;
+
+      if(action === 'edit') openDemandModal(item);
+
+      if(action === 'delivered'){
+        items = items.map(current => current.id === id ? { ...current, status:'Entregue', deliveredDate: current.deliveredDate || today } : current);
+        saveItems();
+        render();
+      }
+
+      if(action === 'delete'){
+        const confirmed = confirm('Deseja excluir esta demanda?');
+        if(!confirmed) return;
+        items = items.filter(current => current.id !== id);
+        saveItems();
+        render();
+      }
+    }
+
+    function saveSettingsForm(event){
+      event.preventDefault();
+      settings = {
+        agencyName: els.agencyNameInput.value.trim() || 'ConnectPixel',
+        monthlyLimit: Math.max(1, Number(els.monthlyLimitInput.value) || 1)
+      };
+      saveSettings();
+      closeSettingsModal();
+      render();
+    }
+
+    function exportCsv(){
+      const headers = ['Cliente','Tema','Formato','Responsável','Data pedida','Prazo original','Data entregue','Tempo de entrega em dias','Atraso em dias','Status','Prioridade','Observações'];
+      const rows = filteredItems().map(item => {
+        const deliveryTime = daysBetween(item.requestedDate, item.deliveredDate);
+        const lateDays = item.deliveredDate ? Math.max(0, daysBetween(item.originalDeadline, item.deliveredDate) || 0) : Math.max(0, daysBetween(item.originalDeadline, today) || 0);
+        return [item.client,item.theme,item.format,item.responsible,formatDate(item.requestedDate),formatDate(item.originalDeadline),formatDate(item.deliveredDate),deliveryTime ?? '',lateDays,visibleStatus(item),item.priority,item.notes];
+      });
+      const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell ?? '').replaceAll('"','""')}"`).join(',')).join('\n');
+      downloadFile('\uFEFF' + csv, `connectpixel-demandas-${filters.month}.csv`, 'text/csv;charset=utf-8;');
+    }
+
+    function exportBackup(){
+      const payload = { items, settings, exportedAt:new Date().toISOString() };
+      downloadFile(JSON.stringify(payload,null,2), 'backup-connectpixel-demandas.json', 'application/json');
+    }
+
+    function importBackup(event){
+      const file = event.target.files && event.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const payload = JSON.parse(reader.result);
+          if(!Array.isArray(payload.items)) throw new Error('Backup inválido');
+          items = payload.items;
+          settings = { ...settings, ...(payload.settings || {}) };
+          saveItems();
+          saveSettings();
+          render();
+        } catch {
+          alert('Não foi possível importar o backup. Verifique se o arquivo está correto.');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    function downloadFile(content,fileName,type){
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    els.openCreateBtn.addEventListener('click', () => openDemandModal());
+    els.openSettingsBtn.addEventListener('click', openSettingsModal);
+    els.alertSettingsBtn.addEventListener('click', openSettingsModal);
+    els.closeDemandModal.addEventListener('click', closeDemandModal);
+    els.cancelDemandBtn.addEventListener('click', closeDemandModal);
+    els.closeSettingsModal.addEventListener('click', closeSettingsModal);
+    els.cancelSettingsBtn.addEventListener('click', closeSettingsModal);
+    els.demandForm.addEventListener('submit', saveDemand);
+    els.settingsForm.addEventListener('submit', saveSettingsForm);
+    els.exportCsvBtn.addEventListener('click', exportCsv);
+    els.exportBackupBtn.addEventListener('click', exportBackup);
+    els.importBackupInput.addEventListener('change', importBackup);
+    els.tableBody.addEventListener('click', handleActionClick);
+    els.mobileCards.addEventListener('click', handleActionClick);
+
+    els.searchInput.addEventListener('input', event => {
+      filters.search = event.target.value;
+      renderRows();
+    });
+    els.monthFilter.addEventListener('change', event => {
+      filters.month = event.target.value;
+      render();
+    });
+    els.clientFilter.addEventListener('change', event => {
+      filters.client = event.target.value;
+      render();
+    });
+    els.statusFilter.addEventListener('change', event => {
+      filters.status = event.target.value;
+      renderRows();
+    });
+    els.clearFiltersBtn.addEventListener('click', () => {
+      filters = { search:'', month:getMonthKey(today), client:'todos', status:'todos' };
+      els.searchInput.value = '';
+      els.statusFilter.value = 'todos';
+      render();
+    });
+    els.deliveredDateInput.addEventListener('change', () => {
+      if(els.deliveredDateInput.value) els.statusInput.value = 'Entregue';
+    });
+    document.addEventListener('keydown', event => {
+      if(event.key === 'Escape'){
+        closeDemandModal();
+        closeSettingsModal();
+      }
+    });
+    els.demandModal.addEventListener('click', event => {
+      if(event.target === els.demandModal) closeDemandModal();
+    });
+    els.settingsModal.addEventListener('click', event => {
+      if(event.target === els.settingsModal) closeSettingsModal();
+    });
+
+    initCustomSelects();
+    render();
+  </script>
+</body>
+</html>
