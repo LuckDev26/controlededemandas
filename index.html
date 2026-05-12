@@ -1,0 +1,3642 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ConnectPixel | Controle de Demandas</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:#071315;
+      --core:#132F33;
+      --card:rgba(255,255,255,.065);
+      --card2:rgba(255,255,255,.095);
+      --line:rgba(255,255,255,.12);
+      --text:#f7fffc;
+      --muted:rgba(247,255,252,.63);
+      --soft:rgba(247,255,252,.42);
+      --brand:#48e5c2;
+      --brand2:#b1fd64;
+      --danger:#ff6b6b;
+      --warning:#ffd166;
+      --success:#70e59b;
+      --title:'Space Grotesk',sans-serif;
+      --body:'Inter',sans-serif;
+      --shadow:0 24px 80px rgba(0,0,0,.28);
+    }
+
+    * { box-sizing:border-box; }
+    body {
+      margin:0;
+      min-height:100vh;
+      background:
+        radial-gradient(circle at 8% 5%, rgba(72,229,194,.22), transparent 28%),
+        radial-gradient(circle at 92% 8%, rgba(177,253,100,.10), transparent 24%),
+        radial-gradient(circle at 50% 100%, rgba(72,229,194,.12), transparent 32%),
+        var(--bg);
+      color:var(--text);
+      font-family:var(--body);
+    }
+
+    button,input,select,textarea { font-family:inherit; }
+    button { cursor:pointer; }
+    h1,h2,h3 { font-family:var(--title); margin:0; }
+    .app { width:min(1480px,calc(100% - 32px)); margin:0 auto; padding:32px 0 52px; }
+
+    .topbar {
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:24px;
+      align-items:center;
+      padding:28px;
+      border:1px solid var(--line);
+      border-radius:34px;
+      background:linear-gradient(135deg,rgba(255,255,255,.075),rgba(255,255,255,.035));
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(22px);
+      position:relative;
+      overflow:hidden;
+    }
+    .topbar:after {
+      content:"";
+      position:absolute;
+      right:-110px;
+      bottom:-150px;
+      width:390px;
+      height:390px;
+      border-radius:50%;
+      background:radial-gradient(circle,rgba(72,229,194,.22),transparent 65%);
+      pointer-events:none;
+    }
+    .eyebrow {
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border:1px solid rgba(72,229,194,.24);
+      border-radius:999px;
+      background:rgba(72,229,194,.09);
+      color:#bdfced;
+      font-size:11px;
+      font-weight:800;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+    }
+    .topbar h1 {
+      margin-top:16px;
+      max-width:850px;
+      font-size:clamp(32px,5vw,58px);
+      line-height:.98;
+      letter-spacing:-.055em;
+    }
+    .topbar p {
+      max-width:760px;
+      margin:18px 0 0;
+      color:var(--muted);
+      line-height:1.75;
+      font-size:15.5px;
+    }
+
+    svg {
+      width:18px;
+      height:18px;
+      stroke:currentColor;
+      stroke-width:2;
+      fill:none;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+      flex:0 0 auto;
+    }
+
+    .actions {
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      gap:10px;
+      position:relative;
+      z-index:2;
+    }
+    .btn {
+      min-height:46px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:9px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.065);
+      color:rgba(255,255,255,.82);
+      padding:0 16px;
+      font-size:13px;
+      font-weight:800;
+      transition:.18s ease;
+      text-decoration:none;
+      white-space:nowrap;
+    }
+    .btn:hover { transform:translateY(-1px); background:rgba(255,255,255,.105); color:#fff; }
+    .btn.loading-report { opacity:.72; pointer-events:none; }
+    .btn.loading-report::before {
+      content:"";
+      width:14px;
+      height:14px;
+      border-radius:50%;
+      border:2px solid currentColor;
+      border-right-color:transparent;
+      animation:spin .75s linear infinite;
+    }
+    .btn-primary {
+      border:0;
+      color:#071315;
+      background:linear-gradient(135deg,var(--brand2),var(--brand));
+      box-shadow:0 18px 36px rgba(72,229,194,.18);
+    }
+    .btn-primary:hover { background:linear-gradient(135deg,#c8ff82,#65f0d4); color:#071315; }
+    .hidden-input { display:none; }
+
+    .alert-box {
+      display:none;
+      margin:20px 0 0;
+      padding:18px;
+      border-radius:28px;
+      border:1px solid rgba(255,209,102,.26);
+      background:rgba(255,209,102,.095);
+      animation:fadeUp .32s ease both;
+    }
+    .alert-box.danger {
+      border-color:rgba(255,107,107,.30);
+      background:rgba(255,107,107,.11);
+    }
+    .alert-box.show {
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:18px;
+    }
+    .alert-content { display:flex; gap:14px; align-items:flex-start; }
+    .alert-icon {
+      width:46px;
+      height:46px;
+      border-radius:16px;
+      display:grid;
+      place-items:center;
+      background:rgba(255,255,255,.08);
+      border:1px solid var(--line);
+      color:var(--warning);
+    }
+    .alert-box.danger .alert-icon { color:#ffb1b1; }
+    .alert-box h3 { font-size:18px; letter-spacing:-.02em; }
+    .alert-box p { margin:6px 0 0; color:var(--muted); font-size:14px; line-height:1.6; }
+
+    .stats-grid {
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      gap:14px;
+      margin:20px 0;
+    }
+    .stat-card {
+      padding:20px;
+      min-height:148px;
+      border-radius:28px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.055);
+      box-shadow:0 18px 44px rgba(0,0,0,.13);
+      position:relative;
+      overflow:hidden;
+      animation:fadeUp .35s ease both;
+    }
+    .stat-card:after {
+      content:"";
+      position:absolute;
+      right:-65px;
+      bottom:-80px;
+      width:170px;
+      height:170px;
+      border-radius:999px;
+      background:rgba(72,229,194,.08);
+    }
+    .stat-top { display:flex; justify-content:space-between; gap:16px; position:relative; z-index:1; }
+    .stat-label { display:block; color:var(--soft); font-size:13px; font-weight:800; }
+    .stat-value {
+      display:block;
+      margin-top:10px;
+      font-family:var(--title);
+      font-size:36px;
+      font-weight:800;
+      line-height:1;
+      letter-spacing:-.05em;
+    }
+    .stat-helper { display:block; margin-top:12px; color:rgba(255,255,255,.45); font-size:12.5px; line-height:1.5; position:relative; z-index:1; }
+    .stat-icon {
+      width:44px;
+      height:44px;
+      border-radius:16px;
+      display:grid;
+      place-items:center;
+      color:#bdfced;
+      background:rgba(255,255,255,.07);
+      border:1px solid var(--line);
+    }
+    .stat-card.warning { border-color:rgba(255,209,102,.24); background:rgba(255,209,102,.085); }
+    .stat-card.danger { border-color:rgba(255,107,107,.24); background:rgba(255,107,107,.085); }
+    .stat-card.success { border-color:rgba(112,229,155,.2); background:rgba(112,229,155,.07); }
+
+    .filters {
+      display:grid;
+      grid-template-columns:1.35fr .82fr .72fr .62fr;
+      gap:12px;
+      padding:16px;
+      border:1px solid var(--line);
+      border-radius:28px;
+      background:rgba(255,255,255,.05);
+      margin-bottom:20px;
+    }
+    .field { position:relative; }
+    .date-field::before {
+      position:absolute;
+      top:5px;
+      left:44px;
+      z-index:2;
+      color:rgba(255,255,255,.38);
+      font-size:9px;
+      font-weight:800;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      pointer-events:none;
+    }
+    .date-field.start::before { content:"De"; }
+    .date-field.end::before { content:"Até"; }
+    .date-field input {
+      padding-top:13px;
+      font-size:12px;
+    }
+    .field svg {
+      position:absolute;
+      left:15px;
+      top:50%;
+      transform:translateY(-50%);
+      color:rgba(255,255,255,.34);
+      pointer-events:none;
+    }
+    input,select,textarea {
+      width:100%;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.22);
+      color:#fff;
+      outline:0;
+      transition:.18s ease;
+    }
+    input,select { height:48px; border-radius:16px; padding:0 14px; }
+    .field input,.field select { padding-left:44px; }
+    textarea { min-height:112px; border-radius:18px; padding:14px; resize:vertical; line-height:1.6; }
+    input::placeholder,textarea::placeholder { color:rgba(255,255,255,.31); }
+    input:focus,select:focus,textarea:focus {
+      border-color:rgba(72,229,194,.45);
+      background:rgba(0,0,0,.30);
+      box-shadow:0 0 0 4px rgba(72,229,194,.075);
+    }
+    select option { color:#071315; }
+
+
+    .period-picker {
+      position: relative;
+      z-index: 55;
+    }
+
+    .period-trigger {
+      min-height: 48px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.035)), rgba(0,0,0,.22);
+      color: #fff;
+      padding: 0 14px 0 44px;
+      font-size: 13px;
+      font-weight: 800;
+      text-align: left;
+      transition: border-color .18s ease, background .18s ease, box-shadow .18s ease, transform .18s ease;
+      position: relative;
+    }
+
+    .period-trigger:hover {
+      transform: translateY(-1px);
+      border-color: rgba(72,229,194,.26);
+      background: linear-gradient(180deg, rgba(255,255,255,.095), rgba(255,255,255,.045)), rgba(0,0,0,.26);
+    }
+
+    .period-picker.is-open .period-trigger {
+      border-color: rgba(72,229,194,.52);
+      box-shadow: 0 0 0 4px rgba(72,229,194,.08);
+    }
+
+    .period-trigger .chevron {
+      width: 18px;
+      height: 18px;
+      color: rgba(255,255,255,.55);
+      transition: transform .18s ease, color .18s ease;
+    }
+
+    .period-picker.is-open .chevron {
+      transform: rotate(180deg);
+      color: var(--brand);
+    }
+
+    .period-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      width: min(420px, calc(100vw - 36px));
+      display: none;
+      padding: 10px;
+      border-radius: 22px;
+      border: 1px solid rgba(72,229,194,.18);
+      background: radial-gradient(circle at 85% 0%, rgba(72,229,194,.13), transparent 36%), rgba(8,25,27,.98);
+      box-shadow: 0 22px 55px rgba(0,0,0,.35);
+      backdrop-filter: blur(20px);
+      animation: dropdownReveal .18s ease both;
+    }
+
+    .period-picker.is-open .period-menu {
+      display: block;
+    }
+
+    .period-menu-title {
+      padding: 8px 9px 10px;
+      color: rgba(255,255,255,.45);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .period-presets {
+      display: grid;
+      gap: 5px;
+    }
+
+    .period-option {
+      width: 100%;
+      min-height: 40px;
+      border: 0;
+      border-radius: 14px;
+      background: transparent;
+      color: rgba(255,255,255,.78);
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      text-align: left;
+      transition: background .16s ease, color .16s ease, transform .16s ease;
+    }
+
+    .period-option:hover {
+      color: #fff;
+      background: rgba(255,255,255,.08);
+      transform: translateX(2px);
+    }
+
+    .period-option.is-selected {
+      color: #071315;
+      background: linear-gradient(135deg, var(--brand2), var(--brand));
+    }
+
+    .period-option.is-selected::after {
+      content: "✓";
+      font-weight: 900;
+    }
+
+    .custom-period-box {
+      display: none;
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.055);
+    }
+
+    .custom-period-box.show {
+      display: block;
+      animation: fadeUp .18s ease both;
+    }
+
+    .custom-period-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .custom-period-grid label {
+      display: grid;
+      gap: 6px;
+      font-size: 11px;
+      color: rgba(255,255,255,.48);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .custom-period-grid input {
+      color-scheme: dark;
+      padding-left: 12px;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .custom-period-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .mini-btn {
+      min-height: 38px;
+      border-radius: 13px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.07);
+      color: rgba(255,255,255,.78);
+      font-size: 12px;
+      font-weight: 850;
+      transition: transform .16s ease, background .16s ease;
+    }
+
+    .mini-btn:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.11);
+      color: #fff;
+    }
+
+    .mini-btn.primary {
+      border: 0;
+      color: #071315;
+      background: linear-gradient(135deg, var(--brand2), var(--brand));
+    }
+
+    .table-panel {
+      border:1px solid var(--line);
+      border-radius:34px;
+      background:rgba(255,255,255,.052);
+      overflow:hidden;
+      box-shadow:0 20px 70px rgba(0,0,0,.14);
+    }
+    .panel-header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      padding:22px;
+      border-bottom:1px solid var(--line);
+    }
+    .panel-header small { display:block; color:var(--soft); margin-bottom:6px; font-size:12px; font-weight:800; }
+    .panel-header h2 { font-size:26px; letter-spacing:-.035em; text-transform:capitalize; }
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; min-width:1160px; }
+    th,td { padding:15px 14px; text-align:left; vertical-align:middle; border-bottom:1px solid rgba(255,255,255,.08); }
+    th { background:rgba(0,0,0,.20); color:rgba(255,255,255,.38); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; font-weight:800; }
+    td { color:rgba(255,255,255,.72); font-size:13px; }
+    tr:hover td { background:rgba(255,255,255,.028); }
+
+    .client-name,.theme-title { color:#fff; font-weight:800; }
+    .theme-title { max-width:300px; line-height:1.45; }
+    .notes-text { margin-top:5px; color:rgba(255,255,255,.42); font-size:12px; line-height:1.45; max-width:330px; }
+    .pill {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:26px;
+      padding:0 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      color:rgba(255,255,255,.72);
+      font-size:11px;
+      font-weight:800;
+      white-space:nowrap;
+    }
+    .pill.success { color:#caffd8; border-color:rgba(112,229,155,.22); background:rgba(112,229,155,.09); }
+    .pill.warning { color:#ffedb0; border-color:rgba(255,209,102,.26); background:rgba(255,209,102,.10); }
+    .pill.danger { color:#ffc8c8; border-color:rgba(255,107,107,.25); background:rgba(255,107,107,.10); }
+    .pill.info { color:#bdfced; border-color:rgba(72,229,194,.22); background:rgba(72,229,194,.09); }
+    .date-sub { margin-top:5px; color:rgba(255,255,255,.4); font-size:11.5px; line-height:1.4; }
+    .date-sub.late { color:#ffc0c0; }
+    .row-actions { display:flex; gap:8px; align-items:center; }
+    .icon-btn {
+      width:38px;
+      height:38px;
+      display:grid;
+      place-items:center;
+      border-radius:13px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.055);
+      color:rgba(255,255,255,.72);
+      transition:.18s ease;
+    }
+    .icon-btn:hover { transform:translateY(-1px); background:rgba(255,255,255,.10); color:#fff; }
+    .icon-btn.success { color:#caffd8; border-color:rgba(112,229,155,.22); background:rgba(112,229,155,.085); }
+    .icon-btn.danger { color:#ffc8c8; border-color:rgba(255,107,107,.22); background:rgba(255,107,107,.085); }
+
+    .empty { display:none; padding:70px 20px; text-align:center; }
+    .empty.show { display:block; }
+    .empty-icon {
+      width:64px;
+      height:64px;
+      margin:0 auto 16px;
+      display:grid;
+      place-items:center;
+      border-radius:22px;
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--line);
+      color:rgba(255,255,255,.45);
+    }
+    .empty h3 { font-size:22px; letter-spacing:-.03em; }
+    .empty p { margin:8px auto 0; max-width:460px; color:var(--muted); line-height:1.65; }
+
+    .modal-backdrop {
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      background:rgba(0,0,0,.68);
+      backdrop-filter:blur(16px);
+      z-index:90;
+    }
+    .modal-backdrop.show { display:flex; animation:fadeIn .2s ease both; }
+    .modal {
+      width:min(920px,100%);
+      max-height:92vh;
+      overflow:auto;
+      border:1px solid var(--line);
+      border-radius:32px;
+      background:radial-gradient(circle at 85% 0%,rgba(72,229,194,.11),transparent 28%),#0b191b;
+      box-shadow:var(--shadow);
+      padding:24px;
+      animation:modalUp .24s ease both;
+    }
+    .modal-head { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin-bottom:22px; }
+    .modal-head small { color:#bdfced; font-size:11px; font-weight:800; letter-spacing:.20em; text-transform:uppercase; }
+    .modal-head h2 { margin-top:7px; font-size:28px; letter-spacing:-.04em; }
+    .form-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+    .form-group { display:flex; flex-direction:column; gap:8px; }
+    .form-group.full { grid-column:1/-1; }
+    label { color:rgba(255,255,255,.62); font-size:13px; font-weight:800; }
+    .modal-actions { grid-column:1/-1; display:flex; justify-content:flex-end; gap:10px; padding-top:8px; }
+    .settings-note { grid-column:1/-1; padding:18px; border:1px solid var(--line); border-radius:22px; background:rgba(255,255,255,.055); }
+    .settings-note h3 { font-size:18px; letter-spacing:-.02em; }
+    .settings-note p { margin:8px 0 0; color:var(--muted); line-height:1.7; font-size:14px; }
+
+    .mobile-cards { display:none; padding:14px; gap:12px; }
+    .demand-card { border:1px solid var(--line); background:rgba(255,255,255,.045); border-radius:24px; padding:16px; }
+    .demand-card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:12px; }
+    .demand-card h3 { font-size:17px; letter-spacing:-.02em; line-height:1.35; }
+    .demand-card .client { margin-bottom:6px; color:#bdfced; font-size:12px; font-weight:800; }
+    .card-meta { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:14px; }
+    .meta-box { padding:12px; border-radius:16px; background:rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.07); }
+    .meta-box small { display:block; margin-bottom:5px; color:rgba(255,255,255,.35); font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+    .meta-box span { color:rgba(255,255,255,.78); font-size:12.5px; font-weight:700; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    @keyframes modalUp { from{opacity:0;transform:translateY(16px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+
+
+    /* Refinamentos visuais e microinterações */
+    .btn,
+    .icon-btn,
+    .stat-card,
+    .demand-card,
+    .table-panel,
+    .filters,
+    .topbar,
+    .modal,
+    input,
+    textarea,
+    .custom-select-trigger {
+      will-change: transform;
+    }
+
+    .btn {
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .btn::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      transform: translateX(-115%);
+      background: linear-gradient(110deg, transparent, rgba(255,255,255,.22), transparent);
+      transition: transform .55s cubic-bezier(.2,.8,.2,1);
+      z-index: -1;
+    }
+
+    .btn:hover::after {
+      transform: translateX(115%);
+    }
+
+    .btn:active,
+    .icon-btn:active {
+      transform: translateY(0) scale(.98);
+    }
+
+    .btn-primary::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(255,255,255,.34), transparent 45%);
+      opacity: .55;
+      pointer-events: none;
+    }
+
+    .topbar {
+      animation: heroReveal .55s cubic-bezier(.2,.8,.2,1) both;
+    }
+
+    .stat-card {
+      transition: transform .24s cubic-bezier(.2,.8,.2,1), border-color .24s ease, background .24s ease, box-shadow .24s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(72,229,194,.24);
+      background: rgba(255,255,255,.075);
+      box-shadow: 0 26px 70px rgba(0,0,0,.18);
+    }
+
+    .table-panel,
+    .filters {
+      animation: fadeUp .42s cubic-bezier(.2,.8,.2,1) both;
+    }
+
+    tbody tr {
+      animation: rowReveal .28s ease both;
+    }
+
+    tbody tr td {
+      transition: background .18s ease, transform .18s ease;
+    }
+
+    tbody tr:hover td:first-child {
+      box-shadow: inset 3px 0 0 rgba(72,229,194,.72);
+    }
+
+    .demand-card {
+      animation: fadeUp .28s ease both;
+      transition: transform .22s ease, border-color .22s ease, background .22s ease;
+    }
+
+    .demand-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(72,229,194,.25);
+      background: rgba(255,255,255,.065);
+    }
+
+    input:hover,
+    textarea:hover {
+      border-color: rgba(255,255,255,.2);
+      background: rgba(0,0,0,.27);
+    }
+
+    .native-hidden {
+      position: absolute !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      width: 1px !important;
+      height: 1px !important;
+    }
+
+    .custom-select {
+      position: relative;
+      width: 100%;
+      z-index: 1;
+    }
+
+    .custom-select.is-open {
+      z-index: 80;
+    }
+
+    .custom-select-trigger {
+      min-height: 48px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.035)), rgba(0,0,0,.22);
+      color: #fff;
+      padding: 0 14px;
+      font-size: 13px;
+      font-weight: 750;
+      text-align: left;
+      transition: border-color .18s ease, background .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+
+    .field .custom-select-trigger {
+      padding-left: 44px;
+    }
+
+    .custom-select-trigger:hover {
+      transform: translateY(-1px);
+      border-color: rgba(72,229,194,.26);
+      background: linear-gradient(180deg, rgba(255,255,255,.095), rgba(255,255,255,.045)), rgba(0,0,0,.26);
+    }
+
+    .custom-select.is-open .custom-select-trigger {
+      border-color: rgba(72,229,194,.52);
+      box-shadow: 0 0 0 4px rgba(72,229,194,.08);
+    }
+
+    .custom-select-trigger .chevron {
+      width: 18px;
+      height: 18px;
+      color: rgba(255,255,255,.55);
+      transition: transform .18s ease, color .18s ease;
+    }
+
+    .custom-select.is-open .chevron {
+      transform: rotate(180deg);
+      color: var(--brand);
+    }
+
+    .custom-options {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      display: none;
+      padding: 7px;
+      border-radius: 18px;
+      border: 1px solid rgba(72,229,194,.18);
+      background: radial-gradient(circle at 85% 0%, rgba(72,229,194,.13), transparent 36%), rgba(8,25,27,.98);
+      box-shadow: 0 22px 55px rgba(0,0,0,.35);
+      backdrop-filter: blur(20px);
+      max-height: 248px;
+      overflow: auto;
+      animation: dropdownReveal .18s ease both;
+    }
+
+    .custom-select.is-open .custom-options {
+      display: grid;
+      gap: 4px;
+    }
+
+    .custom-option {
+      width: 100%;
+      min-height: 38px;
+      border: 0;
+      border-radius: 13px;
+      background: transparent;
+      color: rgba(255,255,255,.75);
+      padding: 0 11px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: left;
+      transition: background .16s ease, color .16s ease, transform .16s ease;
+    }
+
+    .custom-option:hover {
+      color: #fff;
+      background: rgba(255,255,255,.08);
+      transform: translateX(2px);
+    }
+
+    .custom-option.is-selected {
+      color: #071315;
+      background: linear-gradient(135deg, var(--brand2), var(--brand));
+    }
+
+    .custom-option.is-selected::after {
+      content: "✓";
+      font-weight: 900;
+    }
+
+    @keyframes heroReveal {
+      from { opacity: 0; transform: translateY(12px) scale(.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes rowReveal {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes dropdownReveal {
+      from { opacity: 0; transform: translateY(-6px) scale(.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+
+    /* Correção do filtro de período: fundo sólido, acima da tabela e sem sobreposição bugada */
+    .filters {
+      position: relative;
+      z-index: 120;
+      overflow: visible;
+    }
+
+    .table-panel {
+      position: relative;
+      z-index: 1;
+    }
+
+    .period-picker {
+      z-index: 500;
+    }
+
+    .period-picker.is-open {
+      z-index: 9999;
+    }
+
+    .period-menu {
+      z-index: 99999;
+      background: #0b191b !important;
+      background-image:
+        radial-gradient(circle at 88% 0%, rgba(72,229,194,.18), transparent 38%),
+        linear-gradient(180deg, rgba(19,47,51,.98), rgba(7,19,21,.98)) !important;
+      border: 1px solid rgba(72,229,194,.26) !important;
+      box-shadow: 0 28px 70px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.06) !important;
+      backdrop-filter: none !important;
+      overflow: visible !important;
+      width: min(460px, calc(100vw - 36px)) !important;
+    }
+
+    .period-presets {
+      position: relative;
+      z-index: 2;
+    }
+
+    .period-option {
+      color: rgba(255,255,255,.82);
+    }
+
+    .period-option.is-selected {
+      color: #071315;
+    }
+
+    .custom-period-box {
+      display: block !important;
+      margin-top: 12px;
+      background: rgba(0,0,0,.22);
+      border-color: rgba(72,229,194,.18);
+    }
+
+    .custom-period-title {
+      display: block;
+      margin-bottom: 10px;
+      color: rgba(255,255,255,.58);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .custom-period-grid input {
+      cursor: pointer;
+      color-scheme: dark;
+      background: rgba(255,255,255,.075);
+    }
+
+    .custom-period-grid input::-webkit-calendar-picker-indicator {
+      cursor: pointer;
+      opacity: .9;
+      filter: invert(1);
+    }
+
+    .period-helper {
+      margin: 9px 2px 0;
+      color: rgba(255,255,255,.45);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 760px) {
+      .period-menu {
+        position: fixed;
+        left: 11px !important;
+        right: 11px !important;
+        top: 190px !important;
+        width: auto !important;
+        max-height: calc(100vh - 220px);
+        overflow: auto !important;
+      }
+    }
+
+
+
+    /* Calendário interno do filtro de período */
+    .range-summary {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .range-summary > div {
+      min-height: 58px;
+      padding: 10px 12px;
+      border-radius: 15px;
+      background: rgba(255,255,255,.065);
+      border: 1px solid rgba(255,255,255,.09);
+    }
+
+    .range-summary small {
+      display: block;
+      color: rgba(255,255,255,.42);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .range-summary strong {
+      display: block;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .inline-calendar {
+      padding: 10px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.09);
+    }
+
+    .calendar-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .calendar-head strong {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 900;
+      text-transform: capitalize;
+    }
+
+    .calendar-nav {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.07);
+      color: rgba(255,255,255,.78);
+      transition: transform .16s ease, background .16s ease, color .16s ease;
+    }
+
+    .calendar-nav:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.12);
+      color: #fff;
+    }
+
+    .calendar-weekdays,
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+    }
+
+    .calendar-weekdays {
+      margin-bottom: 6px;
+    }
+
+    .calendar-weekdays span {
+      min-height: 24px;
+      display: grid;
+      place-items: center;
+      color: rgba(255,255,255,.42);
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .calendar-day {
+      min-height: 36px;
+      border: 0;
+      border-radius: 12px;
+      background: transparent;
+      color: rgba(255,255,255,.72);
+      font-size: 12px;
+      font-weight: 850;
+      transition: transform .14s ease, background .14s ease, color .14s ease;
+    }
+
+    .calendar-day:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.09);
+      color: #fff;
+    }
+
+    .calendar-day.is-muted {
+      color: rgba(255,255,255,.22);
+    }
+
+    .calendar-day.is-today {
+      box-shadow: inset 0 0 0 1px rgba(72,229,194,.48);
+      color: #bdfced;
+    }
+
+    .calendar-day.is-in-range {
+      background: rgba(72,229,194,.14);
+      color: #d9fff5;
+    }
+
+    .calendar-day.is-start,
+    .calendar-day.is-end {
+      background: linear-gradient(135deg, var(--brand2), var(--brand));
+      color: #071315;
+    }
+
+    .calendar-day.is-start {
+      border-top-right-radius: 8px;
+      border-bottom-right-radius: 8px;
+    }
+
+    .calendar-day.is-end {
+      border-top-left-radius: 8px;
+      border-bottom-left-radius: 8px;
+    }
+
+    .calendar-day.is-disabled {
+      opacity: .35;
+      pointer-events: none;
+    }
+
+    .period-menu {
+      width: min(480px, calc(100vw - 36px)) !important;
+    }
+
+    @media (max-width: 760px) {
+      .range-summary {
+        grid-template-columns: 1fr;
+      }
+
+      .calendar-day {
+        min-height: 34px;
+      }
+    }
+
+    /* Correção das setas dos filtros: ícone à esquerda, seta à direita */
+    .field > svg {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      width: 18px;
+      height: 18px;
+      transform: translateY(-50%);
+      color: rgba(255,255,255,.34);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .field .custom-select-trigger svg.chevron,
+    .field .period-trigger svg.chevron {
+      position: static !important;
+      left: auto !important;
+      top: auto !important;
+      width: 18px !important;
+      height: 18px !important;
+      transform: none !important;
+      color: rgba(255,255,255,.55);
+      pointer-events: none;
+      z-index: auto;
+      flex: 0 0 auto;
+    }
+
+    .field .custom-select.is-open .custom-select-trigger svg.chevron,
+    .field.period-picker.is-open .period-trigger svg.chevron {
+      transform: rotate(180deg) !important;
+      color: var(--brand);
+    }
+
+    .field .custom-select-trigger,
+    .field .period-trigger {
+      padding-right: 16px;
+    }
+
+
+    /* Ajuste final do calendário: setas alinhadas e visual mais compacto */
+    .period-menu {
+      width: min(390px, calc(100vw - 36px)) !important;
+      padding: 8px !important;
+      border-radius: 20px !important;
+    }
+
+    .period-menu svg,
+    .calendar-nav svg {
+      position: static !important;
+      left: auto !important;
+      top: auto !important;
+      transform: none !important;
+      width: 16px !important;
+      height: 16px !important;
+      pointer-events: none;
+      color: currentColor;
+      z-index: auto;
+    }
+
+    .period-menu-title {
+      padding: 6px 8px 8px !important;
+      font-size: 9px !important;
+    }
+
+    .period-presets {
+      gap: 4px !important;
+    }
+
+    .period-option {
+      min-height: 34px !important;
+      border-radius: 12px !important;
+      padding: 0 10px !important;
+      font-size: 12px !important;
+    }
+
+    .custom-period-box {
+      margin-top: 8px !important;
+      padding: 10px !important;
+      border-radius: 16px !important;
+    }
+
+    .custom-period-title {
+      margin-bottom: 8px !important;
+      font-size: 9px !important;
+    }
+
+    .range-summary {
+      gap: 7px !important;
+      margin-bottom: 8px !important;
+    }
+
+    .range-summary > div {
+      min-height: 50px !important;
+      padding: 8px 10px !important;
+      border-radius: 13px !important;
+    }
+
+    .range-summary small {
+      font-size: 9px !important;
+      margin-bottom: 4px !important;
+    }
+
+    .range-summary strong {
+      font-size: 12px !important;
+    }
+
+    .inline-calendar {
+      padding: 8px !important;
+      border-radius: 15px !important;
+    }
+
+    .calendar-head {
+      margin-bottom: 7px !important;
+      gap: 8px !important;
+    }
+
+    .calendar-head strong {
+      font-size: 13px !important;
+      line-height: 1;
+    }
+
+    .calendar-nav {
+      width: 30px !important;
+      height: 30px !important;
+      min-width: 30px !important;
+      min-height: 30px !important;
+      border-radius: 10px !important;
+      display: inline-grid !important;
+      place-items: center !important;
+      padding: 0 !important;
+      line-height: 0 !important;
+      position: relative !important;
+    }
+
+    .calendar-nav:hover {
+      transform: translateY(-1px) !important;
+    }
+
+    .calendar-weekdays,
+    .calendar-days {
+      gap: 3px !important;
+    }
+
+    .calendar-weekdays {
+      margin-bottom: 4px !important;
+    }
+
+    .calendar-weekdays span {
+      min-height: 18px !important;
+      font-size: 9px !important;
+    }
+
+    .calendar-day {
+      min-height: 29px !important;
+      height: 29px !important;
+      border-radius: 9px !important;
+      font-size: 11px !important;
+      padding: 0 !important;
+      line-height: 1 !important;
+    }
+
+    .custom-period-actions {
+      gap: 7px !important;
+      margin-top: 8px !important;
+    }
+
+    .mini-btn {
+      min-height: 34px !important;
+      border-radius: 11px !important;
+      font-size: 11px !important;
+    }
+
+    .period-helper {
+      margin-top: 7px !important;
+      font-size: 10px !important;
+    }
+
+    @media (max-width: 760px) {
+      .period-menu {
+        top: 160px !important;
+      }
+
+      .calendar-day {
+        min-height: 30px !important;
+        height: 30px !important;
+      }
+    }
+
+
+    /* Correção: calendário flutuante sem criar espaço vazio na página */
+    body.period-menu-open {
+      overflow-x: hidden;
+    }
+
+    .period-menu {
+      position: fixed !important;
+      top: var(--period-menu-top, 120px) !important;
+      left: var(--period-menu-left, 50%) !important;
+      right: auto !important;
+      transform: none !important;
+      max-height: min(620px, calc(100vh - 32px)) !important;
+      overflow: auto !important;
+      contain: layout paint;
+    }
+
+    .period-picker.is-open .period-menu {
+      display: block !important;
+    }
+
+    @media (max-width: 760px) {
+      .period-menu {
+        top: var(--period-menu-top, 92px) !important;
+        left: 11px !important;
+        right: 11px !important;
+        width: auto !important;
+        max-height: calc(100vh - 110px) !important;
+      }
+    }
+
+
+    /* Correção definitiva: calendário em camada flutuante independente */
+    .period-menu.force-open {
+      display: block !important;
+      position: fixed !important;
+      top: var(--period-menu-top, 120px) !important;
+      left: var(--period-menu-left, 50%) !important;
+      right: auto !important;
+      z-index: 999999 !important;
+      width: min(390px, calc(100vw - 36px)) !important;
+      max-height: min(620px, calc(100vh - 32px)) !important;
+      overflow: auto !important;
+      background: #0b191b !important;
+      background-image:
+        radial-gradient(circle at 88% 0%, rgba(72,229,194,.18), transparent 38%),
+        linear-gradient(180deg, rgba(19,47,51,.98), rgba(7,19,21,.98)) !important;
+      border: 1px solid rgba(72,229,194,.26) !important;
+      box-shadow: 0 28px 70px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.06) !important;
+      backdrop-filter: none !important;
+      transform: none !important;
+      contain: layout paint;
+    }
+
+    .period-trigger.force-active {
+      border-color: rgba(72,229,194,.52) !important;
+      box-shadow: 0 0 0 4px rgba(72,229,194,.08) !important;
+    }
+
+    .period-trigger.force-active .chevron {
+      transform: rotate(180deg) !important;
+      color: var(--brand) !important;
+    }
+
+    @media (max-width: 760px) {
+      .period-menu.force-open {
+        left: 11px !important;
+        right: 11px !important;
+        width: auto !important;
+        top: var(--period-menu-top, 92px) !important;
+        max-height: calc(100vh - 110px) !important;
+      }
+    }
+
+
+    /* Correção: calendário não corta no final da tela */
+    .period-menu.force-open {
+      width: min(370px, calc(100vw - 28px)) !important;
+      max-height: var(--period-menu-max-height, 460px) !important;
+      overflow-y: auto !important;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(72,229,194,.55) rgba(255,255,255,.08);
+    }
+
+    .period-menu.force-open::-webkit-scrollbar {
+      width: 7px;
+    }
+
+    .period-menu.force-open::-webkit-scrollbar-track {
+      background: rgba(255,255,255,.06);
+      border-radius: 999px;
+    }
+
+    .period-menu.force-open::-webkit-scrollbar-thumb {
+      background: rgba(72,229,194,.55);
+      border-radius: 999px;
+    }
+
+    .period-menu.force-open .period-option {
+      min-height: 32px !important;
+    }
+
+    .period-menu.force-open .custom-period-box {
+      padding: 8px !important;
+    }
+
+    .period-menu.force-open .range-summary > div {
+      min-height: 46px !important;
+    }
+
+    .period-menu.force-open .inline-calendar {
+      padding: 7px !important;
+    }
+
+    .period-menu.force-open .calendar-day {
+      min-height: 27px !important;
+      height: 27px !important;
+    }
+
+    .period-menu.force-open .period-helper {
+      display: none;
+    }
+
+
+    /* Refinamento do menu superior e correção do modal de limite */
+    .topbar {
+      grid-template-columns: minmax(0, 1fr) minmax(420px, 760px);
+      align-items: start;
+    }
+
+    .actions {
+      display: grid !important;
+      grid-template-columns: repeat(4, minmax(118px, 1fr));
+      gap: 10px;
+      align-items: stretch;
+      justify-content: end;
+      width: 100%;
+      max-width: 760px;
+      margin-left: auto;
+    }
+
+    .actions .btn {
+      min-height: 44px;
+      height: 44px;
+      width: 100%;
+      padding: 0 13px;
+      border-radius: 15px;
+      justify-content: center;
+      font-size: 12px;
+      letter-spacing: -.01em;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.035)),
+        rgba(255,255,255,.045);
+      border-color: rgba(255,255,255,.12);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.055);
+    }
+
+    .actions .btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .actions .btn-primary {
+      grid-column: span 2;
+      font-size: 13px;
+      box-shadow: 0 16px 34px rgba(72,229,194,.16);
+    }
+
+    .actions label.btn {
+      margin: 0;
+    }
+
+    .modal-backdrop {
+      z-index: 999999;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(72,229,194,.08), transparent 35%),
+        rgba(0, 0, 0, .78) !important;
+      backdrop-filter: blur(18px) saturate(120%);
+      align-items: center;
+    }
+
+    .modal {
+      width: min(860px, calc(100vw - 36px));
+      max-height: calc(100vh - 54px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden !important;
+      padding: 0 !important;
+      border-radius: 30px;
+      background:
+        radial-gradient(circle at 85% 0%, rgba(72,229,194,.14), transparent 30%),
+        linear-gradient(180deg, rgba(19,47,51,.98), rgba(8,25,27,.98)) !important;
+      border-color: rgba(72,229,194,.18);
+    }
+
+    .modal-head {
+      margin: 0 !important;
+      padding: 24px 24px 18px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      flex: 0 0 auto;
+    }
+
+    .modal-head h2 {
+      font-size: clamp(24px, 3vw, 30px);
+    }
+
+    .modal .form-grid {
+      overflow: auto;
+      padding: 20px 24px 0;
+      flex: 1 1 auto;
+      min-height: 0;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(72,229,194,.5) rgba(255,255,255,.06);
+    }
+
+    .modal .form-grid::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .modal .form-grid::-webkit-scrollbar-track {
+      background: rgba(255,255,255,.05);
+      border-radius: 999px;
+    }
+
+    .modal .form-grid::-webkit-scrollbar-thumb {
+      background: rgba(72,229,194,.48);
+      border-radius: 999px;
+    }
+
+    .modal-actions {
+      position: sticky;
+      bottom: 0;
+      z-index: 10;
+      margin: 12px -24px 0;
+      padding: 16px 24px 22px;
+      border-top: 1px solid rgba(255,255,255,.09);
+      background:
+        linear-gradient(180deg, rgba(8,25,27,.72), rgba(8,25,27,.98) 42%),
+        #08191b;
+      backdrop-filter: blur(16px);
+      border-bottom-left-radius: 30px;
+      border-bottom-right-radius: 30px;
+    }
+
+    .modal-actions .btn {
+      min-width: 150px;
+      height: 44px;
+    }
+
+    .settings-note {
+      margin-top: 2px;
+      background: rgba(255,255,255,.055) !important;
+      border-color: rgba(255,255,255,.10) !important;
+    }
+
+    #settingsModal .modal {
+      width: min(820px, calc(100vw - 36px));
+    }
+
+    #settingsModal .form-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    #settingsModal .settings-note {
+      grid-column: 1 / -1;
+    }
+
+    #settingsModal .modal-actions {
+      grid-column: 1 / -1;
+    }
+
+    @media (max-width: 1180px) {
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        max-width: none;
+        margin-left: 0;
+        grid-template-columns: repeat(3, minmax(120px, 1fr));
+      }
+
+      .actions .btn-primary {
+        grid-column: span 1;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      }
+
+      .actions .btn {
+        min-height: 42px;
+        height: auto;
+        white-space: normal;
+      }
+
+      .modal {
+        width: calc(100vw - 22px);
+        max-height: calc(100vh - 22px);
+        border-radius: 24px;
+      }
+
+      .modal-head {
+        padding: 20px 18px 14px;
+      }
+
+      .modal .form-grid {
+        grid-template-columns: 1fr !important;
+        padding: 16px 18px 0;
+      }
+
+      .modal-actions {
+        margin: 10px -18px 0;
+        padding: 14px 18px 18px;
+        flex-direction: column-reverse;
+      }
+
+      .modal-actions .btn {
+        width: 100%;
+        min-width: 0;
+      }
+    }
+
+    @media (max-width:1180px) {
+      .topbar { grid-template-columns:1fr; }
+      .actions { justify-content:flex-start; }
+      .stats-grid { grid-template-columns:repeat(2,1fr); }
+      .filters { grid-template-columns:repeat(2,1fr); }
+    }
+    @media (max-width:760px) {
+      .app { width:min(100% - 22px,1480px); padding-top:14px; }
+      .topbar,.table-panel,.filters,.stat-card,.alert-box,.modal { border-radius:24px; }
+      .topbar { padding:20px; }
+      .actions { display:grid; grid-template-columns:1fr 1fr; width:100%; }
+      .btn { width:100%; padding-inline:10px; }
+      .stats-grid,.filters,.form-grid { grid-template-columns:1fr; }
+      .panel-header,.alert-box.show { flex-direction:column; align-items:stretch; }
+      .table-wrap { display:none; }
+      .mobile-cards { display:grid; }
+      .modal-actions { flex-direction:column-reverse; }
+      .card-meta { grid-template-columns:1fr; }
+    }
+  
+    /* Ajuste do menu superior: alinhamento e destaque do botão principal */
+    .topbar {
+      align-items: center !important;
+    }
+
+    .actions {
+      align-self: center !important;
+      align-content: center !important;
+      margin-top: 10px !important;
+      transform: translateY(8px);
+    }
+
+    .actions .btn {
+      min-height: 46px;
+      border-color: rgba(255,255,255,.14);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.095), rgba(255,255,255,.045)),
+        rgba(255,255,255,.055);
+      color: rgba(255,255,255,.88);
+    }
+
+    .actions .btn:hover {
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.13), rgba(255,255,255,.065)),
+        rgba(255,255,255,.075);
+      border-color: rgba(72,229,194,.24);
+    }
+
+    .actions .btn-primary,
+    .actions #openCreateBtn {
+      background: linear-gradient(135deg, #b1fd64 0%, #48e5c2 58%, #65f0d4 100%) !important;
+      color: #061617 !important;
+      border: 0 !important;
+      box-shadow:
+        0 18px 42px rgba(72,229,194,.24),
+        inset 0 1px 0 rgba(255,255,255,.45) !important;
+      font-weight: 900;
+      opacity: 1 !important;
+    }
+
+    .actions .btn-primary svg,
+    .actions #openCreateBtn svg {
+      color: #061617 !important;
+      stroke-width: 2.4;
+    }
+
+    .actions .btn-primary:hover,
+    .actions #openCreateBtn:hover {
+      transform: translateY(-2px);
+      background: linear-gradient(135deg, #c8ff82 0%, #56f2d0 58%, #7af8df 100%) !important;
+      box-shadow:
+        0 22px 52px rgba(72,229,194,.30),
+        inset 0 1px 0 rgba(255,255,255,.55) !important;
+    }
+
+    @media (max-width: 1180px) {
+      .actions {
+        transform: none;
+        margin-top: 4px !important;
+      }
+    }
+
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <span class="eyebrow">
+          <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h16"/></svg>
+          Controle de produção
+        </span>
+        <h1>Painel de demandas da ConnectPixel</h1>
+        <p>Registre conteúdos pedidos, prazos originais, entregas realizadas e acompanhe se a produção do mês está dentro do limite que você definiu para a equipe.</p>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="openCreateBtn">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Nova demanda
+        </button>
+        <button class="btn" id="openSettingsBtn">
+          <svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8.92 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.43.48.76.9.91.15.06.31.09.47.09H21a2 2 0 0 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15Z"/></svg>
+          Limite mensal
+        </button>
+        <button class="btn" id="exportCsvBtn">
+          <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+          CSV
+        </button>
+        <button class="btn" id="exportPdfReportBtn">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>
+          Relatório PDF
+        </button>
+        <button class="btn" id="exportImageReportBtn">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
+          Imagem PNG
+        </button>
+        <button class="btn" id="exportBackupBtn">
+          <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
+          Backup
+        </button>
+        <label class="btn">
+          <svg viewBox="0 0 24 24"><path d="M12 21V9"/><path d="m7 14 5-5 5 5"/><path d="M5 3h14"/></svg>
+          Importar
+          <input class="hidden-input" type="file" id="importBackupInput" accept="application/json">
+        </label>
+      </div>
+    </header>
+
+    <section class="alert-box" id="demandAlert">
+      <div class="alert-content">
+        <div class="alert-icon">
+          <svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        </div>
+        <div>
+          <h3 id="alertTitle">Atenção ao volume do mês</h3>
+          <p id="alertText"></p>
+        </div>
+      </div>
+      <button class="btn" id="alertSettingsBtn">Ajustar limite</button>
+    </section>
+
+    <section class="stats-grid">
+      <article class="stat-card" id="statDemandCard">
+        <div class="stat-top">
+          <div>
+            <span class="stat-label">Demandas no período</span>
+            <span class="stat-value" id="statTotal">0</span>
+          </div>
+          <span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></span>
+        </div>
+        <span class="stat-helper" id="statLimit">0% do limite mensal</span>
+      </article>
+
+      <article class="stat-card success">
+        <div class="stat-top">
+          <div>
+            <span class="stat-label">Entregues</span>
+            <span class="stat-value" id="statDelivered">0</span>
+          </div>
+          <span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span>
+        </div>
+        <span class="stat-helper">Conteúdos finalizados</span>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-top">
+          <div>
+            <span class="stat-label">Em andamento</span>
+            <span class="stat-value" id="statProgress">0</span>
+          </div>
+          <span class="stat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+        </div>
+        <span class="stat-helper">Pendentes ou em produção</span>
+      </article>
+
+      <article class="stat-card" id="statLateCard">
+        <div class="stat-top">
+          <div>
+            <span class="stat-label">Com atraso</span>
+            <span class="stat-value" id="statLate">0</span>
+          </div>
+          <span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>
+        </div>
+        <span class="stat-helper">Entregues ou abertas fora do prazo</span>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-top">
+          <div>
+            <span class="stat-label">Média de entrega</span>
+            <span class="stat-value" id="statAverage">0d</span>
+          </div>
+          <span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><path d="M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/></svg></span>
+        </div>
+        <span class="stat-helper">Do pedido até a entrega</span>
+      </article>
+    </section>
+
+    <section class="filters">
+      <div class="field">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="search" id="searchInput" placeholder="Buscar por cliente, tema, responsável ou observação...">
+      </div>
+      <div class="field period-picker" id="periodPicker">
+        <svg viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><path d="M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/></svg>
+        <button class="period-trigger" type="button" id="periodFilterBtn" onclick="togglePeriodMenu(event)">
+          <span id="periodFilterLabel">Mês atual</span>
+          <svg class="chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+
+        <div class="period-menu" id="periodMenu">
+          <div class="period-menu-title">Selecionar período</div>
+
+          <div class="period-presets">
+            <button class="period-option" type="button" data-period="currentMonth">Mês atual</button>
+            <button class="period-option" type="button" data-period="previousMonth">Mês anterior</button>
+            <button class="period-option" type="button" data-period="last90">Últimos 90 dias</button>
+            <button class="period-option" type="button" data-period="custom">Escolher período personalizado</button>
+          </div>
+
+                    <div class="custom-period-box" id="customPeriodBox">
+            <span class="custom-period-title">Calendário do período personalizado</span>
+
+            <div class="range-summary">
+              <div>
+                <small>De</small>
+                <strong id="rangeStartLabel">Selecione</strong>
+              </div>
+              <div>
+                <small>Até</small>
+                <strong id="rangeEndLabel">Selecione</strong>
+              </div>
+            </div>
+
+            <div class="inline-calendar" id="inlineCalendar">
+              <div class="calendar-head">
+                <button class="calendar-nav" type="button" id="calendarPrevBtn" aria-label="Mês anterior">
+                  <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <strong id="calendarMonthLabel">Mês</strong>
+                <button class="calendar-nav" type="button" id="calendarNextBtn" aria-label="Próximo mês">
+                  <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+              </div>
+
+              <div class="calendar-weekdays">
+                <span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>
+              </div>
+
+              <div class="calendar-days" id="calendarDays"></div>
+            </div>
+
+            <div class="custom-period-actions">
+              <button class="mini-btn" type="button" id="clearCustomPeriodBtn">Limpar</button>
+              <button class="mini-btn primary" type="button" id="applyCustomPeriodBtn">Aplicar período</button>
+            </div>
+            <p class="period-helper">Clique uma vez na data inicial e outra vez na data final do período.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <svg viewBox="0 0 24 24"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+        <select id="clientFilter"></select>
+      </div>
+      <select id="statusFilter">
+        <option value="todos">Todos os status</option>
+        <option value="Pendente">Pendente</option>
+        <option value="Em produção">Em produção</option>
+        <option value="Entregue">Entregue</option>
+        <option value="Atrasado">Atrasado</option>
+      </select>
+    </section>
+
+    <section class="table-panel">
+      <div class="panel-header">
+        <div>
+          <small>Período selecionado</small>
+          <h2 id="periodTitle">Mês atual</h2>
+        </div>
+        <button class="btn" id="clearFiltersBtn">
+          <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+          Limpar filtros
+        </button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Tema</th>
+              <th>Formato</th>
+              <th>Responsável</th>
+              <th>Pedido</th>
+              <th>Prazo</th>
+              <th>Entrega</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="mobile-cards" id="mobileCards"></div>
+
+      <div class="empty" id="emptyState">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </div>
+        <h3>Nenhuma demanda encontrada</h3>
+        <p>Ajuste os filtros ou cadastre uma nova demanda para começar a acompanhar a produção da equipe.</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="demandModal">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <small>ConnectPixel</small>
+          <h2 id="demandModalTitle">Nova demanda</h2>
+        </div>
+        <button class="icon-btn" type="button" id="closeDemandModal" aria-label="Fechar">
+          <svg viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form class="form-grid" id="demandForm">
+        <input type="hidden" id="itemId">
+
+        <div class="form-group">
+          <label for="clientInput">Nome do cliente</label>
+          <input id="clientInput" required placeholder="Ex: Ship7 Informática">
+        </div>
+
+        <div class="form-group">
+          <label for="formatInput">Formato do conteúdo</label>
+          <select id="formatInput">
+            <option>Arte única</option>
+            <option>Carrossel</option>
+            <option>Reels</option>
+            <option>Vídeo</option>
+            <option>Story</option>
+            <option>Capa</option>
+            <option>Outro</option>
+          </select>
+        </div>
+
+        <div class="form-group full">
+          <label for="themeInput">Tema da arte/vídeo/conteúdo</label>
+          <input id="themeInput" required placeholder="Ex: Reels promocional de Dia das Mães">
+        </div>
+
+        <div class="form-group">
+          <label for="responsibleInput">Responsável</label>
+          <select id="responsibleInput">
+            <option>Lucas Alves</option>
+            <option>Bruno Rocha</option>
+            <option>Designer</option>
+            <option>Editor de vídeos</option>
+            <option>Equipe</option>
+            <option>Outro</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="priorityInput">Prioridade</label>
+          <select id="priorityInput">
+            <option>Baixa</option>
+            <option selected>Normal</option>
+            <option>Alta</option>
+            <option>Urgente</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="requestedDateInput">Data em que foi pedida</label>
+          <input id="requestedDateInput" type="date">
+        </div>
+
+        <div class="form-group">
+          <label for="deadlineInput">Prazo original de entrega</label>
+          <input id="deadlineInput" type="date">
+        </div>
+
+        <div class="form-group">
+          <label for="deliveredDateInput">Data em que foi entregue</label>
+          <input id="deliveredDateInput" type="date">
+        </div>
+
+        <div class="form-group">
+          <label for="statusInput">Status</label>
+          <select id="statusInput">
+            <option>Pendente</option>
+            <option selected>Em produção</option>
+            <option>Entregue</option>
+          </select>
+        </div>
+
+        <div class="form-group full">
+          <label for="notesInput">Observações</label>
+          <textarea id="notesInput" placeholder="Ex: briefing incompleto, cliente pediu alteração, atrasou por aprovação etc."></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn" type="button" id="cancelDemandBtn">Cancelar</button>
+          <button class="btn btn-primary" type="submit">Salvar demanda</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <small>Configurações</small>
+          <h2>Limite de demanda mensal</h2>
+        </div>
+        <button class="icon-btn" type="button" id="closeSettingsModal" aria-label="Fechar">
+          <svg viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form class="form-grid" id="settingsForm">
+        <div class="form-group">
+          <label for="agencyNameInput">Nome da agência</label>
+          <input id="agencyNameInput" placeholder="ConnectPixel">
+        </div>
+
+        <div class="form-group">
+          <label for="monthlyLimitInput">Limite máximo de demandas no mês</label>
+          <input id="monthlyLimitInput" type="number" min="1" placeholder="80">
+        </div>
+
+        <div class="settings-note">
+          <h3>Como o alerta funciona</h3>
+          <p>Ao selecionar um mês, o painel compara a quantidade de demandas registradas com o limite definido. Chegando em 85%, ele exibe um aviso preventivo. Ao bater ou passar o limite, o alerta fica crítico.</p>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn" type="button" id="cancelSettingsBtn">Cancelar</button>
+          <button class="btn btn-primary" type="submit">Salvar configurações</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'connectpixel_content_tracker_html_v1';
+    const SETTINGS_KEY = 'connectpixel_content_settings_html_v1';
+    function getLocalISODate(date = new Date()){
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    const today = getLocalISODate();
+
+    let settings = loadSettings();
+    let items = loadItems();
+    let filters = { search:'', periodMode:'currentMonth', client:'todos', status:'todos', startDate:'', endDate:'' };
+    let calendarView = new Date();
+    let tempRange = { start:'', end:'' };
+
+    const icons = {
+      check:'<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>',
+      edit:'<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg>',
+      trash:'<svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>'
+    };
+
+    const els = {
+      openCreateBtn:document.getElementById('openCreateBtn'),
+      openSettingsBtn:document.getElementById('openSettingsBtn'),
+      alertSettingsBtn:document.getElementById('alertSettingsBtn'),
+      exportCsvBtn:document.getElementById('exportCsvBtn'),
+      exportPdfReportBtn:document.getElementById('exportPdfReportBtn'),
+      exportImageReportBtn:document.getElementById('exportImageReportBtn'),
+      exportBackupBtn:document.getElementById('exportBackupBtn'),
+      importBackupInput:document.getElementById('importBackupInput'),
+      searchInput:document.getElementById('searchInput'),
+      periodPicker:document.getElementById('periodPicker'),
+      periodFilterBtn:document.getElementById('periodFilterBtn'),
+      periodFilterLabel:document.getElementById('periodFilterLabel'),
+      periodMenu:document.getElementById('periodMenu'),
+      customPeriodBox:document.getElementById('customPeriodBox'),
+      rangeStartLabel:document.getElementById('rangeStartLabel'),
+      rangeEndLabel:document.getElementById('rangeEndLabel'),
+      calendarMonthLabel:document.getElementById('calendarMonthLabel'),
+      calendarDays:document.getElementById('calendarDays'),
+      calendarPrevBtn:document.getElementById('calendarPrevBtn'),
+      calendarNextBtn:document.getElementById('calendarNextBtn'),
+      applyCustomPeriodBtn:document.getElementById('applyCustomPeriodBtn'),
+      clearCustomPeriodBtn:document.getElementById('clearCustomPeriodBtn'),
+      clientFilter:document.getElementById('clientFilter'),
+      statusFilter:document.getElementById('statusFilter'),
+      clearFiltersBtn:document.getElementById('clearFiltersBtn'),
+      tableBody:document.getElementById('tableBody'),
+      mobileCards:document.getElementById('mobileCards'),
+      emptyState:document.getElementById('emptyState'),
+      periodTitle:document.getElementById('periodTitle'),
+      demandAlert:document.getElementById('demandAlert'),
+      alertTitle:document.getElementById('alertTitle'),
+      alertText:document.getElementById('alertText'),
+      statDemandCard:document.getElementById('statDemandCard'),
+      statLateCard:document.getElementById('statLateCard'),
+      statTotal:document.getElementById('statTotal'),
+      statDelivered:document.getElementById('statDelivered'),
+      statProgress:document.getElementById('statProgress'),
+      statLate:document.getElementById('statLate'),
+      statAverage:document.getElementById('statAverage'),
+      statLimit:document.getElementById('statLimit'),
+      demandModal:document.getElementById('demandModal'),
+      demandModalTitle:document.getElementById('demandModalTitle'),
+      closeDemandModal:document.getElementById('closeDemandModal'),
+      cancelDemandBtn:document.getElementById('cancelDemandBtn'),
+      demandForm:document.getElementById('demandForm'),
+      itemId:document.getElementById('itemId'),
+      clientInput:document.getElementById('clientInput'),
+      formatInput:document.getElementById('formatInput'),
+      themeInput:document.getElementById('themeInput'),
+      responsibleInput:document.getElementById('responsibleInput'),
+      priorityInput:document.getElementById('priorityInput'),
+      requestedDateInput:document.getElementById('requestedDateInput'),
+      deadlineInput:document.getElementById('deadlineInput'),
+      deliveredDateInput:document.getElementById('deliveredDateInput'),
+      statusInput:document.getElementById('statusInput'),
+      notesInput:document.getElementById('notesInput'),
+      settingsModal:document.getElementById('settingsModal'),
+      closeSettingsModal:document.getElementById('closeSettingsModal'),
+      cancelSettingsBtn:document.getElementById('cancelSettingsBtn'),
+      settingsForm:document.getElementById('settingsForm'),
+      agencyNameInput:document.getElementById('agencyNameInput'),
+      monthlyLimitInput:document.getElementById('monthlyLimitInput')
+    };
+
+    function loadSettings() {
+      const fallback = { agencyName:'ConnectPixel', monthlyLimit:80 };
+      try { return { ...fallback, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') }; }
+      catch { return fallback; }
+    }
+
+    function loadItems() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        if (Array.isArray(saved) && saved.length) return saved;
+      } catch {}
+      return [
+        {
+          id:generateId(),
+          client:'Ship7 Informática',
+          theme:'Carrossel de ofertas — periféricos gamer',
+          format:'Carrossel',
+          responsible:'Lucas Alves',
+          requestedDate:today,
+          originalDeadline:today,
+          deliveredDate:'',
+          status:'Em produção',
+          priority:'Normal',
+          notes:'Modelo inicial. Pode editar ou excluir.'
+        },
+        {
+          id:generateId(),
+          client:'FontNet',
+          theme:'Reels institucional — aniversário da cidade',
+          format:'Reels',
+          responsible:'Bruno Rocha',
+          requestedDate:today,
+          originalDeadline:today,
+          deliveredDate:today,
+          status:'Entregue',
+          priority:'Alta',
+          notes:'Exemplo entregue no prazo.'
+        }
+      ];
+    }
+
+    function saveItems(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }
+    function saveSettings(){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+    function generateId(){ return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'id_' + Date.now() + '_' + Math.random().toString(16).slice(2); }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#039;");
+    }
+
+    function getMonthKey(dateString){ if(!dateString) return 'sem-data'; return dateString.slice(0,7); }
+    function formatMonthLabel(monthKey){
+      if(!monthKey || monthKey === 'todos') return 'Todos os meses';
+      const parts = monthKey.split('-');
+      const date = new Date(Number(parts[0]), Number(parts[1])-1, 1);
+      return date.toLocaleDateString('pt-BR', { month:'long', year:'numeric' });
+    }
+    function formatDate(dateString){ if(!dateString) return '—'; return new Date(dateString + 'T00:00:00').toLocaleDateString('pt-BR'); }
+
+    function toISODate(date){
+      return getLocalISODate(date);
+    }
+
+    function getMonthRange(offset = 0){
+      const now = new Date();
+      const first = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+      const last = new Date(now.getFullYear(), now.getMonth() + offset + 1, 0);
+      return { start: toISODate(first), end: toISODate(last) };
+    }
+
+    function getLast90Range(){
+      const end = new Date();
+      const start = new Date();
+      start.setDate(end.getDate() - 89);
+      return { start: toISODate(start), end: toISODate(end) };
+    }
+
+    function hasCustomDateRange(){
+      return filters.periodMode === 'custom';
+    }
+
+    function setPeriod(mode, startDate = '', endDate = ''){
+      filters.periodMode = mode;
+
+      if(mode === 'currentMonth'){
+        const range = getMonthRange(0);
+        filters.startDate = range.start;
+        filters.endDate = range.end;
+      }
+
+      if(mode === 'previousMonth'){
+        const range = getMonthRange(-1);
+        filters.startDate = range.start;
+        filters.endDate = range.end;
+      }
+
+      if(mode === 'last90'){
+        const range = getLast90Range();
+        filters.startDate = range.start;
+        filters.endDate = range.end;
+      }
+
+      if(mode === 'custom'){
+        filters.startDate = startDate;
+        filters.endDate = endDate;
+      }
+
+      tempRange = { start: filters.startDate, end: filters.endDate };
+    }
+
+    function isWithinSelectedPeriod(dateString){
+      if(!dateString) return false;
+
+      const date = new Date(dateString + 'T00:00:00');
+      if(filters.startDate && date < new Date(filters.startDate + 'T00:00:00')) return false;
+      if(filters.endDate && date > new Date(filters.endDate + 'T00:00:00')) return false;
+      return true;
+    }
+
+    function getPeriodLabel(){
+      if(filters.periodMode === 'currentMonth') return 'Mês atual';
+      if(filters.periodMode === 'previousMonth') return 'Mês anterior';
+      if(filters.periodMode === 'last90') return 'Últimos 90 dias';
+
+      if(filters.periodMode === 'custom'){
+        if(filters.startDate && filters.endDate) return `De ${formatDate(filters.startDate)} até ${formatDate(filters.endDate)}`;
+        if(filters.startDate) return `A partir de ${formatDate(filters.startDate)}`;
+        if(filters.endDate) return `Até ${formatDate(filters.endDate)}`;
+        return 'Período personalizado';
+      }
+
+      return 'Mês atual';
+    }
+
+    function getPeriodSlug(){
+      const start = filters.startDate || 'inicio';
+      const end = filters.endDate || 'hoje';
+      return `${filters.periodMode}-${start}-a-${end}`;
+    }
+
+
+    function parseISODate(dateString){
+      if(!dateString) return null;
+      return new Date(dateString + 'T00:00:00');
+    }
+
+    function isSameDate(a, b){
+      return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    }
+
+    function isDateBetween(date, start, end){
+      if(!date || !start || !end) return false;
+      const time = date.getTime();
+      return time >= start.getTime() && time <= end.getTime();
+    }
+
+    function setCalendarViewFromRange(){
+      const baseDate = parseISODate(tempRange.start || filters.startDate) || new Date();
+      calendarView = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
+    }
+
+    function updateRangeLabels(){
+      els.rangeStartLabel.textContent = tempRange.start ? formatDate(tempRange.start) : 'Selecione';
+      els.rangeEndLabel.textContent = tempRange.end ? formatDate(tempRange.end) : (tempRange.start ? 'Escolha o fim' : 'Selecione');
+    }
+
+    function renderInlineCalendar(){
+      if(!els.calendarDays) return;
+
+      const year = calendarView.getFullYear();
+      const month = calendarView.getMonth();
+
+      els.calendarMonthLabel.textContent = new Date(year, month, 1).toLocaleDateString('pt-BR', {
+        month: 'long',
+        year: 'numeric'
+      });
+
+      els.calendarDays.innerHTML = '';
+
+      const firstDay = new Date(year, month, 1);
+      const startDate = new Date(year, month, 1 - firstDay.getDay());
+
+      const selectedStart = parseISODate(tempRange.start);
+      const selectedEnd = parseISODate(tempRange.end);
+      const now = parseISODate(today);
+
+      for(let index = 0; index < 42; index++){
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + index);
+
+        const iso = toISODate(date);
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'calendar-day';
+        button.textContent = date.getDate();
+        button.dataset.date = iso;
+
+        if(date.getMonth() !== month) button.classList.add('is-muted');
+        if(isSameDate(date, now)) button.classList.add('is-today');
+
+        if(selectedStart && isSameDate(date, selectedStart)) button.classList.add('is-start');
+        if(selectedEnd && isSameDate(date, selectedEnd)) button.classList.add('is-end');
+        if(selectedStart && selectedEnd && isDateBetween(date, selectedStart, selectedEnd)) button.classList.add('is-in-range');
+
+        button.addEventListener('click', () => selectCalendarDate(iso));
+
+        els.calendarDays.appendChild(button);
+      }
+
+      updateRangeLabels();
+    }
+
+    function selectCalendarDate(isoDate){
+      filters.periodMode = 'custom';
+
+      const clickedDate = new Date(isoDate + 'T00:00:00');
+
+      if(!tempRange.start || (tempRange.start && tempRange.end)){
+        tempRange = { start: isoDate, end: '' };
+        filters.startDate = isoDate;
+        filters.endDate = isoDate;
+      } else {
+        const startDate = new Date(tempRange.start + 'T00:00:00');
+
+        if(clickedDate < startDate){
+          tempRange = { start: isoDate, end: tempRange.start };
+        } else {
+          tempRange.end = isoDate;
+        }
+
+        filters.startDate = tempRange.start;
+        filters.endDate = tempRange.end;
+      }
+
+      renderFilters();
+      renderInlineCalendar();
+      renderStats();
+      renderRows();
+    }
+
+    function daysBetween(start,end){
+      if(!start || !end) return null;
+      const startDate = new Date(start + 'T00:00:00');
+      const endDate = new Date(end + 'T00:00:00');
+      return Math.round((endDate - startDate) / (1000*60*60*24));
+    }
+    function isLate(item){
+      if(!item.originalDeadline) return false;
+      const referenceDate = item.deliveredDate || today;
+      return new Date(referenceDate + 'T00:00:00') > new Date(item.originalDeadline + 'T00:00:00');
+    }
+    function visibleStatus(item){ return isLate(item) && item.status !== 'Entregue' ? 'Atrasado' : item.status; }
+    function pillClass(value){
+      if(value === 'Entregue') return 'success';
+      if(value === 'Atrasado' || value === 'Urgente') return 'danger';
+      if(value === 'Alta') return 'warning';
+      if(value === 'Em produção') return 'info';
+      return '';
+    }
+
+    function filteredItems(){
+      return items.filter(item => {
+        const baseDate = item.deliveredDate || item.requestedDate;
+        const matchesMonth = isWithinSelectedPeriod(baseDate);
+        const matchesClient = filters.client === 'todos' || item.client === filters.client;
+        const matchesStatus = filters.status === 'todos' || visibleStatus(item) === filters.status;
+        const searchText = `${item.client} ${item.theme} ${item.format} ${item.responsible} ${item.notes}`.toLowerCase();
+        const matchesSearch = !filters.search || searchText.includes(filters.search.toLowerCase());
+        return matchesMonth && matchesClient && matchesStatus && matchesSearch;
+      }).sort((a,b) => new Date((b.requestedDate || '1900-01-01') + 'T00:00:00') - new Date((a.requestedDate || '1900-01-01') + 'T00:00:00'));
+    }
+
+    function statsBaseItems(){
+      return items.filter(item => isWithinSelectedPeriod(item.deliveredDate || item.requestedDate));
+    }
+
+    function calculateStats(){
+      const base = statsBaseItems();
+      const delivered = base.filter(item => item.status === 'Entregue');
+      const progress = base.filter(item => item.status !== 'Entregue');
+      const late = base.filter(item => isLate(item));
+      const leadTimes = delivered.map(item => daysBetween(item.requestedDate, item.deliveredDate)).filter(day => typeof day === 'number' && !Number.isNaN(day));
+      const average = leadTimes.length ? Math.round((leadTimes.reduce((sum,day)=>sum+day,0) / leadTimes.length) * 10) / 10 : 0;
+      const limitPercent = settings.monthlyLimit ? Math.round((base.length / settings.monthlyLimit) * 100) : 0;
+      return { total:base.length, delivered:delivered.length, progress:progress.length, late:late.length, average, limitPercent };
+    }
+
+    function renderFilters(){
+      els.periodFilterLabel.textContent = getPeriodLabel();
+
+      document.querySelectorAll('.period-option').forEach(button => {
+        button.classList.toggle('is-selected', button.dataset.period === filters.periodMode);
+      });
+
+      if(filters.periodMode !== 'custom'){
+        tempRange = { start: filters.startDate, end: filters.endDate };
+      }
+      updateRangeLabels();
+      renderInlineCalendar();
+
+      const clients = [...new Set(items.map(item => item.client).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+      els.clientFilter.innerHTML = `<option value="todos">Todos os clientes</option>` + clients.map(client => `<option value="${escapeHtml(client)}">${escapeHtml(client)}</option>`).join('');
+      els.clientFilter.value = filters.client;
+    }
+
+    function renderStats(){
+      const stats = calculateStats();
+      const isSpecificMonth = true;
+      const reachedLimit = isSpecificMonth && stats.total >= settings.monthlyLimit;
+      const nearLimit = isSpecificMonth && stats.total >= settings.monthlyLimit * .85 && stats.total < settings.monthlyLimit;
+
+      els.statTotal.textContent = stats.total;
+      els.statDelivered.textContent = stats.delivered;
+      els.statProgress.textContent = stats.progress;
+      els.statLate.textContent = stats.late;
+      els.statAverage.textContent = `${stats.average}d`;
+      els.statLimit.textContent = `${stats.limitPercent}% do limite mensal de ${settings.monthlyLimit}`;
+      els.periodTitle.textContent = getPeriodLabel();
+
+      els.statDemandCard.classList.toggle('danger', reachedLimit);
+      els.statDemandCard.classList.toggle('warning', nearLimit);
+      els.statLateCard.classList.toggle('danger', stats.late > 0);
+
+      els.demandAlert.classList.remove('show','danger');
+      if(reachedLimit || nearLimit){
+        els.demandAlert.classList.add('show');
+        if(reachedLimit) els.demandAlert.classList.add('danger');
+        els.alertTitle.textContent = reachedLimit ? 'Limite mensal ultrapassado' : 'Mês perto do limite de produção';
+        els.alertText.textContent = `${getPeriodLabel()} está com ${stats.total} demandas registradas de um limite de ${settings.monthlyLimit}. Use isso para reorganizar prazos, redistribuir tarefas ou controlar novas entradas.`;
+      }
+    }
+
+    function renderRows(){
+      const list = filteredItems();
+      els.tableBody.innerHTML = '';
+      els.mobileCards.innerHTML = '';
+      els.emptyState.classList.toggle('show', list.length === 0);
+
+      list.forEach(item => {
+        const status = visibleStatus(item);
+        const late = isLate(item);
+        const deliveryTime = daysBetween(item.requestedDate, item.deliveredDate);
+        const lateDays = item.deliveredDate ? Math.max(0, daysBetween(item.originalDeadline, item.deliveredDate) || 0) : Math.max(0, daysBetween(item.originalDeadline, today) || 0);
+        const deliveryInfo = item.deliveredDate ? `${deliveryTime ?? 0} dia(s) para entregar${lateDays ? ` · ${lateDays} dia(s) atraso` : ''}` : late ? `${lateDays} dia(s) em atraso` : 'Ainda não entregue';
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><div class="client-name">${escapeHtml(item.client)}</div></td>
+          <td>
+            <div class="theme-title">${escapeHtml(item.theme)}</div>
+            ${item.notes ? `<div class="notes-text">${escapeHtml(item.notes)}</div>` : ''}
+          </td>
+          <td>${escapeHtml(item.format)}</td>
+          <td>${escapeHtml(item.responsible)}</td>
+          <td>${formatDate(item.requestedDate)}</td>
+          <td>${formatDate(item.originalDeadline)}</td>
+          <td>
+            ${formatDate(item.deliveredDate)}
+            <div class="date-sub ${late ? 'late' : ''}">${escapeHtml(deliveryInfo)}</div>
+          </td>
+          <td>
+            <span class="pill ${pillClass(status)}">${escapeHtml(status)}</span>
+            <span class="pill ${pillClass(item.priority)}" style="margin-left:6px;">${escapeHtml(item.priority)}</span>
+          </td>
+          <td>
+            <div class="row-actions">
+              ${item.status !== 'Entregue' ? `<button class="icon-btn success" data-action="delivered" data-id="${item.id}" title="Marcar como entregue">${icons.check}</button>` : ''}
+              <button class="icon-btn" data-action="edit" data-id="${item.id}" title="Editar">${icons.edit}</button>
+              <button class="icon-btn danger" data-action="delete" data-id="${item.id}" title="Excluir">${icons.trash}</button>
+            </div>
+          </td>
+        `;
+        els.tableBody.appendChild(row);
+
+        const card = document.createElement('article');
+        card.className = 'demand-card';
+        card.innerHTML = `
+          <div class="demand-card-head">
+            <div>
+              <div class="client">${escapeHtml(item.client)}</div>
+              <h3>${escapeHtml(item.theme)}</h3>
+            </div>
+            <span class="pill ${pillClass(status)}">${escapeHtml(status)}</span>
+          </div>
+          ${item.notes ? `<div class="notes-text">${escapeHtml(item.notes)}</div>` : ''}
+          <div class="card-meta">
+            <div class="meta-box"><small>Formato</small><span>${escapeHtml(item.format)}</span></div>
+            <div class="meta-box"><small>Responsável</small><span>${escapeHtml(item.responsible)}</span></div>
+            <div class="meta-box"><small>Pedido</small><span>${formatDate(item.requestedDate)}</span></div>
+            <div class="meta-box"><small>Prazo</small><span>${formatDate(item.originalDeadline)}</span></div>
+            <div class="meta-box"><small>Entrega</small><span>${formatDate(item.deliveredDate)}</span></div>
+            <div class="meta-box"><small>Tempo</small><span>${escapeHtml(deliveryInfo)}</span></div>
+          </div>
+          <div class="row-actions" style="margin-top:14px;">
+            ${item.status !== 'Entregue' ? `<button class="icon-btn success" data-action="delivered" data-id="${item.id}" title="Marcar como entregue">${icons.check}</button>` : ''}
+            <button class="icon-btn" data-action="edit" data-id="${item.id}" title="Editar">${icons.edit}</button>
+            <button class="icon-btn danger" data-action="delete" data-id="${item.id}" title="Excluir">${icons.trash}</button>
+          </div>
+        `;
+        els.mobileCards.appendChild(card);
+      });
+    }
+
+
+    function refreshCustomSelect(select){
+      const wrapper = select.closest('.custom-select');
+      if(!wrapper) return;
+      const trigger = wrapper.querySelector('.custom-select-trigger');
+      const options = wrapper.querySelector('.custom-options');
+      if(!trigger || !options) return;
+
+      const selectedText = select.options[select.selectedIndex]?.text || 'Selecionar';
+      trigger.querySelector('.custom-select-value').textContent = selectedText;
+      options.innerHTML = '';
+
+      Array.from(select.options).forEach(option => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'custom-option';
+        if(option.value === select.value) button.classList.add('is-selected');
+        button.textContent = option.text;
+        button.dataset.value = option.value;
+
+        button.addEventListener('click', () => {
+          select.value = option.value;
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+          wrapper.classList.remove('is-open');
+          refreshCustomSelect(select);
+        });
+
+        options.appendChild(button);
+      });
+    }
+
+    function refreshAllCustomSelects(){
+      document.querySelectorAll('select').forEach(refreshCustomSelect);
+    }
+
+    function initCustomSelects(){
+      document.querySelectorAll('select').forEach(select => {
+        if(select.dataset.customReady === 'true') return;
+        select.dataset.customReady = 'true';
+        select.classList.add('native-hidden');
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'custom-select';
+        wrapper.dataset.for = select.id || '';
+
+        const trigger = document.createElement('button');
+        trigger.type = 'button';
+        trigger.className = 'custom-select-trigger';
+        trigger.innerHTML = `<span class="custom-select-value"></span><svg class="chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>`;
+
+        const options = document.createElement('div');
+        options.className = 'custom-options';
+
+        select.parentNode.insertBefore(wrapper, select);
+        wrapper.appendChild(select);
+        wrapper.appendChild(trigger);
+        wrapper.appendChild(options);
+
+        trigger.addEventListener('click', event => {
+          event.stopPropagation();
+          document.querySelectorAll('.custom-select.is-open').forEach(openSelect => {
+            if(openSelect !== wrapper) openSelect.classList.remove('is-open');
+          });
+          wrapper.classList.toggle('is-open');
+          refreshCustomSelect(select);
+        });
+
+        select.addEventListener('change', () => refreshCustomSelect(select));
+        refreshCustomSelect(select);
+      });
+    }
+
+    document.addEventListener('click', event => {
+      if(!event.target.closest('.custom-select')){
+        document.querySelectorAll('.custom-select.is-open').forEach(select => select.classList.remove('is-open'));
+      }
+    });
+
+
+    function positionPeriodMenu(){
+      if(!els.periodPicker || !els.periodMenu || !els.periodFilterBtn) return;
+
+      const trigger = els.periodFilterBtn.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const margin = 14;
+      const menuWidth = Math.min(370, viewportWidth - margin * 2);
+
+      let left = trigger.left;
+      if(left + menuWidth > viewportWidth - margin){
+        left = viewportWidth - menuWidth - margin;
+      }
+      if(left < margin) left = margin;
+
+      const estimatedHeight = Math.min(500, viewportHeight - margin * 2);
+      const spaceBelow = viewportHeight - trigger.bottom - margin;
+      const spaceAbove = trigger.top - margin;
+
+      let top;
+      let maxHeight;
+
+      if(spaceBelow >= 430){
+        top = trigger.bottom + 8;
+        maxHeight = Math.min(500, viewportHeight - top - margin);
+      } else if(spaceAbove > spaceBelow){
+        maxHeight = Math.min(500, spaceAbove - 8);
+        top = Math.max(margin, trigger.top - maxHeight - 8);
+      } else {
+        top = trigger.bottom + 8;
+        maxHeight = Math.max(300, viewportHeight - top - margin);
+      }
+
+      if(maxHeight < 300){
+        top = margin;
+        maxHeight = viewportHeight - margin * 2;
+      }
+
+      els.periodMenu.style.setProperty('--period-menu-left', `${left}px`);
+      els.periodMenu.style.setProperty('--period-menu-top', `${top}px`);
+      els.periodMenu.style.setProperty('--period-menu-max-height', `${maxHeight}px`);
+    }
+
+    function render(){
+      renderFilters();
+      renderStats();
+      renderRows();
+      refreshAllCustomSelects();
+    }
+
+    function openDemandModal(item = null){
+      if(typeof closePeriodMenu === 'function') closePeriodMenu();
+      els.demandForm.reset();
+      if(item){
+        els.demandModalTitle.textContent = 'Editar demanda';
+        els.itemId.value = item.id;
+        els.clientInput.value = item.client;
+        els.formatInput.value = item.format;
+        els.themeInput.value = item.theme;
+        els.responsibleInput.value = item.responsible;
+        els.priorityInput.value = item.priority;
+        els.requestedDateInput.value = item.requestedDate;
+        els.deadlineInput.value = item.originalDeadline;
+        els.deliveredDateInput.value = item.deliveredDate;
+        els.statusInput.value = item.status;
+        els.notesInput.value = item.notes;
+      } else {
+        els.demandModalTitle.textContent = 'Nova demanda';
+        els.itemId.value = '';
+        els.formatInput.value = 'Arte única';
+        els.responsibleInput.value = 'Lucas Alves';
+        els.priorityInput.value = 'Normal';
+        els.requestedDateInput.value = today;
+        els.deadlineInput.value = today;
+        els.deliveredDateInput.value = '';
+        els.statusInput.value = 'Em produção';
+      }
+      els.demandModal.classList.add('show');
+    }
+    function closeDemandModal(){ els.demandModal.classList.remove('show'); }
+    function openSettingsModal(){
+      if(typeof closePeriodMenu === 'function') closePeriodMenu();
+      els.agencyNameInput.value = settings.agencyName;
+      els.monthlyLimitInput.value = settings.monthlyLimit;
+      els.settingsModal.classList.add('show');
+    }
+    function closeSettingsModal(){ els.settingsModal.classList.remove('show'); }
+
+    function saveDemand(event){
+      event.preventDefault();
+      const item = {
+        id: els.itemId.value || generateId(),
+        client: els.clientInput.value.trim(),
+        theme: els.themeInput.value.trim(),
+        format: els.formatInput.value,
+        responsible: els.responsibleInput.value,
+        requestedDate: els.requestedDateInput.value,
+        originalDeadline: els.deadlineInput.value,
+        deliveredDate: els.deliveredDateInput.value,
+        status: els.statusInput.value,
+        priority: els.priorityInput.value,
+        notes: els.notesInput.value.trim()
+      };
+
+      if(!item.client || !item.theme) return;
+      if(item.deliveredDate && item.status !== 'Entregue') item.status = 'Entregue';
+
+      const exists = items.some(current => current.id === item.id);
+      items = exists ? items.map(current => current.id === item.id ? item : current) : [item, ...items];
+
+      saveItems();
+      closeDemandModal();
+      render();
+    }
+
+    function handleActionClick(event){
+      const button = event.target.closest('[data-action]');
+      if(!button) return;
+
+      const id = button.dataset.id;
+      const action = button.dataset.action;
+      const item = items.find(current => current.id === id);
+      if(!item) return;
+
+      if(action === 'edit') openDemandModal(item);
+
+      if(action === 'delivered'){
+        items = items.map(current => current.id === id ? { ...current, status:'Entregue', deliveredDate: current.deliveredDate || today } : current);
+        saveItems();
+        render();
+      }
+
+      if(action === 'delete'){
+        const confirmed = confirm('Deseja excluir esta demanda?');
+        if(!confirmed) return;
+        items = items.filter(current => current.id !== id);
+        saveItems();
+        render();
+      }
+    }
+
+    function saveSettingsForm(event){
+      event.preventDefault();
+      settings = {
+        agencyName: els.agencyNameInput.value.trim() || 'ConnectPixel',
+        monthlyLimit: Math.max(1, Number(els.monthlyLimitInput.value) || 1)
+      };
+      saveSettings();
+      closeSettingsModal();
+      render();
+    }
+
+
+    function getReportData(){
+      const stats = calculateStats();
+      const list = filteredItems();
+      const periodLabel = getPeriodLabel();
+      const generatedAt = new Date().toLocaleString('pt-BR');
+      return { stats, list, periodLabel, generatedAt };
+    }
+
+    function buildReportHtml(){
+      const { stats, list, periodLabel, generatedAt } = getReportData();
+      const safePeriod = escapeHtml(periodLabel);
+      const rows = list.map((item, index) => {
+        const status = visibleStatus(item);
+        const late = isLate(item);
+        const deliveryTime = daysBetween(item.requestedDate, item.deliveredDate);
+        const lateDays = item.deliveredDate
+          ? Math.max(0, daysBetween(item.originalDeadline, item.deliveredDate) || 0)
+          : Math.max(0, daysBetween(item.originalDeadline, today) || 0);
+
+        const deliveryInfo = item.deliveredDate
+          ? `${deliveryTime ?? 0} dia(s)${lateDays ? ` · ${lateDays} dia(s) atraso` : ''}`
+          : late
+            ? `${lateDays} dia(s) em atraso`
+            : 'Não entregue';
+
+        return `
+          <tr>
+            <td>${index + 1}</td>
+            <td><strong>${escapeHtml(item.client)}</strong><br><span>${escapeHtml(item.theme)}</span></td>
+            <td>${escapeHtml(item.format)}</td>
+            <td>${escapeHtml(item.responsible)}</td>
+            <td>${formatDate(item.requestedDate)}</td>
+            <td>${formatDate(item.originalDeadline)}</td>
+            <td>${formatDate(item.deliveredDate)}</td>
+            <td>${escapeHtml(deliveryInfo)}</td>
+            <td><span class="badge ${late ? 'danger' : status === 'Entregue' ? 'success' : 'info'}">${escapeHtml(status)}</span></td>
+          </tr>
+        `;
+      }).join('');
+
+      return `
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+          <meta charset="UTF-8">
+          <title>Relatório mensal - ${safePeriod}</title>
+          <style>
+            @page { size: A4 landscape; margin: 12mm; }
+            * { box-sizing: border-box; }
+            body {
+              margin: 0;
+              background: #eef2f1;
+              color: #132F33;
+              font-family: Inter, Arial, sans-serif;
+            }
+            .report {
+              width: 100%;
+              min-height: 100vh;
+              background:
+                radial-gradient(circle at 0% 0%, rgba(72,229,194,.22), transparent 30%),
+                linear-gradient(135deg, #f8fbfa, #e9f0ee);
+              padding: 28px;
+            }
+            .header {
+              display: flex;
+              justify-content: space-between;
+              gap: 24px;
+              padding: 24px;
+              border-radius: 24px;
+              background: #132F33;
+              color: #fff;
+              overflow: hidden;
+              position: relative;
+            }
+            .header:after {
+              content: "";
+              position: absolute;
+              width: 290px;
+              height: 290px;
+              right: -90px;
+              bottom: -130px;
+              border-radius: 999px;
+              background: radial-gradient(circle, rgba(72,229,194,.35), transparent 68%);
+            }
+            .brand {
+              position: relative;
+              z-index: 1;
+            }
+            .brand small {
+              display: inline-block;
+              color: #b1fd64;
+              text-transform: uppercase;
+              letter-spacing: .18em;
+              font-size: 11px;
+              font-weight: 800;
+              margin-bottom: 10px;
+            }
+            h1 {
+              margin: 0;
+              font-size: 34px;
+              line-height: 1;
+              letter-spacing: -.04em;
+            }
+            .meta {
+              position: relative;
+              z-index: 1;
+              text-align: right;
+              color: rgba(255,255,255,.72);
+              font-size: 12px;
+              line-height: 1.7;
+              min-width: 240px;
+            }
+            .stats {
+              display: grid;
+              grid-template-columns: repeat(5, 1fr);
+              gap: 12px;
+              margin: 18px 0;
+            }
+            .stat {
+              padding: 16px;
+              border-radius: 18px;
+              background: #fff;
+              border: 1px solid rgba(19,47,51,.08);
+              box-shadow: 0 10px 26px rgba(19,47,51,.07);
+            }
+            .stat span {
+              display: block;
+              color: rgba(19,47,51,.58);
+              font-size: 11px;
+              font-weight: 800;
+              text-transform: uppercase;
+              letter-spacing: .08em;
+            }
+            .stat strong {
+              display: block;
+              margin-top: 8px;
+              font-size: 28px;
+              line-height: 1;
+              letter-spacing: -.04em;
+            }
+            .table-card {
+              background: #fff;
+              border: 1px solid rgba(19,47,51,.08);
+              border-radius: 22px;
+              overflow: hidden;
+              box-shadow: 0 12px 28px rgba(19,47,51,.08);
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              font-size: 11px;
+            }
+            th {
+              background: #132F33;
+              color: rgba(255,255,255,.78);
+              text-align: left;
+              padding: 11px 10px;
+              text-transform: uppercase;
+              letter-spacing: .08em;
+              font-size: 9px;
+            }
+            td {
+              padding: 11px 10px;
+              border-bottom: 1px solid rgba(19,47,51,.08);
+              vertical-align: top;
+              color: rgba(19,47,51,.82);
+            }
+            td strong {
+              color: #132F33;
+            }
+            td span {
+              color: rgba(19,47,51,.62);
+              line-height: 1.45;
+            }
+            .badge {
+              display: inline-flex;
+              padding: 5px 8px;
+              border-radius: 999px;
+              font-size: 9px;
+              font-weight: 800;
+              white-space: nowrap;
+            }
+            .badge.success { background: rgba(14,142,78,.12); color: #087445; }
+            .badge.danger { background: rgba(210,49,49,.12); color: #b22b2b; }
+            .badge.info { background: rgba(0,148,126,.12); color: #087a6a; }
+            .empty-report {
+              padding: 34px;
+              text-align: center;
+              color: rgba(19,47,51,.58);
+              font-size: 14px;
+            }
+            .footer {
+              display: flex;
+              justify-content: space-between;
+              gap: 14px;
+              margin-top: 14px;
+              color: rgba(19,47,51,.52);
+              font-size: 11px;
+            }
+            @media print {
+              body { background: #fff; }
+              .report { min-height: auto; padding: 0; background: #fff; }
+            }
+          
+    /* Ajuste do menu superior: alinhamento e destaque do botão principal */
+    .topbar {
+      align-items: center !important;
+    }
+
+    .actions {
+      align-self: center !important;
+      align-content: center !important;
+      margin-top: 10px !important;
+      transform: translateY(8px);
+    }
+
+    .actions .btn {
+      min-height: 46px;
+      border-color: rgba(255,255,255,.14);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.095), rgba(255,255,255,.045)),
+        rgba(255,255,255,.055);
+      color: rgba(255,255,255,.88);
+    }
+
+    .actions .btn:hover {
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.13), rgba(255,255,255,.065)),
+        rgba(255,255,255,.075);
+      border-color: rgba(72,229,194,.24);
+    }
+
+    .actions .btn-primary,
+    .actions #openCreateBtn {
+      background: linear-gradient(135deg, #b1fd64 0%, #48e5c2 58%, #65f0d4 100%) !important;
+      color: #061617 !important;
+      border: 0 !important;
+      box-shadow:
+        0 18px 42px rgba(72,229,194,.24),
+        inset 0 1px 0 rgba(255,255,255,.45) !important;
+      font-weight: 900;
+      opacity: 1 !important;
+    }
+
+    .actions .btn-primary svg,
+    .actions #openCreateBtn svg {
+      color: #061617 !important;
+      stroke-width: 2.4;
+    }
+
+    .actions .btn-primary:hover,
+    .actions #openCreateBtn:hover {
+      transform: translateY(-2px);
+      background: linear-gradient(135deg, #c8ff82 0%, #56f2d0 58%, #7af8df 100%) !important;
+      box-shadow:
+        0 22px 52px rgba(72,229,194,.30),
+        inset 0 1px 0 rgba(255,255,255,.55) !important;
+    }
+
+    @media (max-width: 1180px) {
+      .actions {
+        transform: none;
+        margin-top: 4px !important;
+      }
+    }
+
+  </style>
+        </head>
+        <body>
+          <main class="report" id="monthlyReport">
+            <section class="header">
+              <div class="brand">
+                <small>ConnectPixel · Controle de produção</small>
+                <h1>Relatório mensal de demandas</h1>
+              </div>
+              <div class="meta">
+                <strong>Período:</strong> ${safePeriod}<br>
+                <strong>Gerado em:</strong> ${escapeHtml(generatedAt)}<br>
+                <strong>Filtro de cliente:</strong> ${escapeHtml(filters.client === 'todos' ? 'Todos' : filters.client)}<br>
+                <strong>Status:</strong> ${escapeHtml(filters.status === 'todos' ? 'Todos' : filters.status)}
+              </div>
+            </section>
+
+            <section class="stats">
+              <div class="stat"><span>Demandas</span><strong>${stats.total}</strong></div>
+              <div class="stat"><span>Entregues</span><strong>${stats.delivered}</strong></div>
+              <div class="stat"><span>Em andamento</span><strong>${stats.progress}</strong></div>
+              <div class="stat"><span>Com atraso</span><strong>${stats.late}</strong></div>
+              <div class="stat"><span>Média entrega</span><strong>${stats.average}d</strong></div>
+            </section>
+
+            <section class="table-card">
+              ${
+                list.length
+                  ? `<table>
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Cliente / Tema</th>
+                          <th>Formato</th>
+                          <th>Responsável</th>
+                          <th>Pedido</th>
+                          <th>Prazo</th>
+                          <th>Entrega</th>
+                          <th>Tempo</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>${rows}</tbody>
+                    </table>`
+                  : `<div class="empty-report">Nenhuma demanda encontrada para os filtros selecionados.</div>`
+              }
+            </section>
+
+            <div class="footer">
+              <span>Relatório gerado pela ferramenta interna da ConnectPixel.</span>
+              <span>Limite mensal configurado: ${settings.monthlyLimit} demandas</span>
+            </div>
+          </main>
+        </body>
+        </html>
+      `;
+    }
+
+    function exportMonthlyPdfReport(){
+      const reportWindow = window.open('', '_blank');
+      if(!reportWindow){
+        alert('O navegador bloqueou a abertura do relatório. Permita pop-ups para gerar o PDF.');
+        return;
+      }
+
+      reportWindow.document.open();
+      reportWindow.document.write(buildReportHtml());
+      reportWindow.document.close();
+
+      reportWindow.onload = () => {
+        reportWindow.focus();
+        setTimeout(() => reportWindow.print(), 450);
+      };
+    }
+
+    function stripHtml(value){
+      const div = document.createElement('div');
+      div.innerHTML = value;
+      return div.textContent || div.innerText || '';
+    }
+
+    function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight, maxLines){
+      const words = String(text || '').split(/\s+/);
+      let line = '';
+      let lines = [];
+
+      for(let n = 0; n < words.length; n++){
+        const testLine = line ? line + ' ' + words[n] : words[n];
+        const metrics = ctx.measureText(testLine);
+        if(metrics.width > maxWidth && n > 0){
+          lines.push(line);
+          line = words[n];
+          if(maxLines && lines.length >= maxLines - 1) break;
+        } else {
+          line = testLine;
+        }
+      }
+
+      if(line) lines.push(line);
+      if(maxLines && lines.length > maxLines) lines = lines.slice(0, maxLines);
+
+      lines.forEach((currentLine, index) => {
+        let output = currentLine;
+        if(maxLines && index === maxLines - 1 && words.length > currentLine.split(/\s+/).length){
+          while(ctx.measureText(output + '...').width > maxWidth && output.length > 0){
+            output = output.slice(0, -1);
+          }
+          output += '...';
+        }
+        ctx.fillText(output, x, y + index * lineHeight);
+      });
+
+      return y + lines.length * lineHeight;
+    }
+
+    function roundedRect(ctx, x, y, width, height, radius){
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+
+    function exportMonthlyImageReport(){
+      const btn = els.exportImageReportBtn;
+      btn.classList.add('loading-report');
+
+      try {
+        const { stats, list, periodLabel, generatedAt } = getReportData();
+        const maxRows = Math.min(list.length, 18);
+        const width = 1600;
+        const rowHeight = 78;
+        const height = 570 + Math.max(1, maxRows) * rowHeight + 120;
+        const canvas = document.createElement('canvas');
+        const scale = 2;
+        canvas.width = width * scale;
+        canvas.height = height * scale;
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+
+        const ctx = canvas.getContext('2d');
+        ctx.scale(scale, scale);
+
+        const bg = ctx.createLinearGradient(0, 0, width, height);
+        bg.addColorStop(0, '#f8fbfa');
+        bg.addColorStop(1, '#e8f0ee');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, width, height);
+
+        const glow = ctx.createRadialGradient(100, 40, 10, 100, 40, 520);
+        glow.addColorStop(0, 'rgba(72,229,194,.34)');
+        glow.addColorStop(1, 'rgba(72,229,194,0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, 650, 420);
+
+        roundedRect(ctx, 70, 60, width - 140, 210, 34);
+        ctx.fillStyle = '#132F33';
+        ctx.fill();
+
+        const headerGlow = ctx.createRadialGradient(width - 140, 80, 20, width - 140, 80, 360);
+        headerGlow.addColorStop(0, 'rgba(72,229,194,.42)');
+        headerGlow.addColorStop(1, 'rgba(72,229,194,0)');
+        ctx.fillStyle = headerGlow;
+        ctx.fillRect(width - 500, 40, 500, 260);
+
+        ctx.fillStyle = '#b1fd64';
+        ctx.font = '800 22px Inter, Arial';
+        ctx.fillText('CONNECTPIXEL · CONTROLE DE PRODUÇÃO', 110, 120);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '800 58px Space Grotesk, Inter, Arial';
+        ctx.fillText('Relatório mensal', 110, 184);
+        ctx.fillText('de demandas', 110, 242);
+
+        ctx.textAlign = 'right';
+        ctx.fillStyle = 'rgba(255,255,255,.78)';
+        ctx.font = '700 22px Inter, Arial';
+        ctx.fillText(`Período: ${periodLabel}`, width - 110, 128);
+        ctx.font = '600 18px Inter, Arial';
+        ctx.fillText(`Gerado em: ${generatedAt}`, width - 110, 166);
+        ctx.fillText(`Cliente: ${filters.client === 'todos' ? 'Todos' : filters.client}`, width - 110, 204);
+        ctx.fillText(`Status: ${filters.status === 'todos' ? 'Todos' : filters.status}`, width - 110, 242);
+        ctx.textAlign = 'left';
+
+        const statData = [
+          ['Demandas', stats.total],
+          ['Entregues', stats.delivered],
+          ['Em andamento', stats.progress],
+          ['Com atraso', stats.late],
+          ['Média entrega', `${stats.average}d`]
+        ];
+
+        const statW = (width - 140 - 48) / 5;
+        statData.forEach((stat, index) => {
+          const x = 70 + index * (statW + 12);
+          roundedRect(ctx, x, 300, statW, 130, 24);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(19,47,51,.09)';
+          ctx.stroke();
+
+          ctx.fillStyle = 'rgba(19,47,51,.58)';
+          ctx.font = '800 17px Inter, Arial';
+          ctx.fillText(String(stat[0]).toUpperCase(), x + 24, 348);
+
+          ctx.fillStyle = '#132F33';
+          ctx.font = '800 44px Space Grotesk, Inter, Arial';
+          ctx.fillText(String(stat[1]), x + 24, 397);
+        });
+
+        roundedRect(ctx, 70, 470, width - 140, height - 560, 28);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(19,47,51,.10)';
+        ctx.stroke();
+
+        const tableX = 70;
+        const tableY = 470;
+        const tableW = width - 140;
+
+        roundedRect(ctx, tableX, tableY, tableW, 60, 28);
+        ctx.fillStyle = '#132F33';
+        ctx.fill();
+        ctx.fillRect(tableX, tableY + 28, tableW, 32);
+
+        ctx.fillStyle = 'rgba(255,255,255,.76)';
+        ctx.font = '800 15px Inter, Arial';
+
+        const cols = [
+          ['#', 32],
+          ['CLIENTE / TEMA', 90],
+          ['FORMATO', 610],
+          ['RESPONSÁVEL', 770],
+          ['PEDIDO', 980],
+          ['PRAZO', 1110],
+          ['ENTREGA', 1240],
+          ['STATUS', 1390]
+        ];
+
+        cols.forEach(col => ctx.fillText(col[0], tableX + col[1], tableY + 38));
+
+        if(!list.length){
+          ctx.fillStyle = 'rgba(19,47,51,.58)';
+          ctx.font = '600 24px Inter, Arial';
+          ctx.fillText('Nenhuma demanda encontrada para os filtros selecionados.', 110, 600);
+        } else {
+          list.slice(0, maxRows).forEach((item, index) => {
+            const y = tableY + 78 + index * rowHeight;
+            const status = visibleStatus(item);
+            const late = isLate(item);
+
+            if(index % 2 === 0){
+              ctx.fillStyle = 'rgba(19,47,51,.025)';
+              ctx.fillRect(tableX, y - 22, tableW, rowHeight);
+            }
+
+            ctx.fillStyle = '#132F33';
+            ctx.font = '800 18px Inter, Arial';
+            ctx.fillText(String(index + 1), tableX + 32, y + 8);
+
+            ctx.font = '800 19px Inter, Arial';
+            ctx.fillText(item.client, tableX + 90, y + 2);
+            ctx.fillStyle = 'rgba(19,47,51,.62)';
+            ctx.font = '600 16px Inter, Arial';
+            wrapCanvasText(ctx, item.theme, tableX + 90, y + 27, 455, 20, 2);
+
+            ctx.fillStyle = 'rgba(19,47,51,.80)';
+            ctx.font = '700 17px Inter, Arial';
+            ctx.fillText(item.format, tableX + 610, y + 8);
+            wrapCanvasText(ctx, item.responsible, tableX + 770, y + 8, 170, 20, 2);
+
+            ctx.fillText(formatDate(item.requestedDate), tableX + 980, y + 8);
+            ctx.fillText(formatDate(item.originalDeadline), tableX + 1110, y + 8);
+            ctx.fillText(formatDate(item.deliveredDate), tableX + 1240, y + 8);
+
+            const badgeX = tableX + 1390;
+            const badgeY = y - 12;
+            const badgeW = late ? 90 : status === 'Entregue' ? 86 : 112;
+            roundedRect(ctx, badgeX, badgeY, badgeW, 34, 17);
+            ctx.fillStyle = late ? 'rgba(210,49,49,.12)' : status === 'Entregue' ? 'rgba(14,142,78,.12)' : 'rgba(0,148,126,.12)';
+            ctx.fill();
+            ctx.fillStyle = late ? '#b22b2b' : status === 'Entregue' ? '#087445' : '#087a6a';
+            ctx.font = '800 14px Inter, Arial';
+            ctx.fillText(status, badgeX + 14, badgeY + 22);
+          });
+
+          if(list.length > maxRows){
+            ctx.fillStyle = 'rgba(19,47,51,.52)';
+            ctx.font = '700 17px Inter, Arial';
+            ctx.fillText(`+ ${list.length - maxRows} demanda(s) não exibidas nesta imagem. Use o PDF para relatório completo.`, 110, height - 72);
+          }
+        }
+
+        ctx.fillStyle = 'rgba(19,47,51,.52)';
+        ctx.font = '600 16px Inter, Arial';
+        ctx.fillText(`Relatório gerado pela ferramenta interna da ConnectPixel · Limite mensal: ${settings.monthlyLimit} demandas`, 70, height - 32);
+
+        const link = document.createElement('a');
+        const monthSlug = getPeriodSlug();
+        link.download = `relatorio-connectpixel-${monthSlug}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch(error) {
+        alert('Não foi possível gerar a imagem do relatório.');
+      } finally {
+        btn.classList.remove('loading-report');
+      }
+    }
+
+    function exportCsv(){
+      const headers = ['Cliente','Tema','Formato','Responsável','Data pedida','Prazo original','Data entregue','Tempo de entrega em dias','Atraso em dias','Status','Prioridade','Observações'];
+      const rows = filteredItems().map(item => {
+        const deliveryTime = daysBetween(item.requestedDate, item.deliveredDate);
+        const lateDays = item.deliveredDate ? Math.max(0, daysBetween(item.originalDeadline, item.deliveredDate) || 0) : Math.max(0, daysBetween(item.originalDeadline, today) || 0);
+        return [item.client,item.theme,item.format,item.responsible,formatDate(item.requestedDate),formatDate(item.originalDeadline),formatDate(item.deliveredDate),deliveryTime ?? '',lateDays,visibleStatus(item),item.priority,item.notes];
+      });
+      const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell ?? '').replaceAll('"','""')}"`).join(',')).join('\n');
+      downloadFile('\uFEFF' + csv, `connectpixel-demandas-${getPeriodSlug()}.csv`, 'text/csv;charset=utf-8;');
+    }
+
+    function exportBackup(){
+      const payload = { items, settings, exportedAt:new Date().toISOString() };
+      downloadFile(JSON.stringify(payload,null,2), 'backup-connectpixel-demandas.json', 'application/json');
+    }
+
+    function importBackup(event){
+      const file = event.target.files && event.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const payload = JSON.parse(reader.result);
+          if(!Array.isArray(payload.items)) throw new Error('Backup inválido');
+          items = payload.items;
+          settings = { ...settings, ...(payload.settings || {}) };
+          saveItems();
+          saveSettings();
+          render();
+        } catch {
+          alert('Não foi possível importar o backup. Verifique se o arquivo está correto.');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    function downloadFile(content,fileName,type){
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    els.openCreateBtn.addEventListener('click', () => openDemandModal());
+    els.openSettingsBtn.addEventListener('click', openSettingsModal);
+    els.alertSettingsBtn.addEventListener('click', openSettingsModal);
+    els.closeDemandModal.addEventListener('click', closeDemandModal);
+    els.cancelDemandBtn.addEventListener('click', closeDemandModal);
+    els.closeSettingsModal.addEventListener('click', closeSettingsModal);
+    els.cancelSettingsBtn.addEventListener('click', closeSettingsModal);
+    els.demandForm.addEventListener('submit', saveDemand);
+    els.settingsForm.addEventListener('submit', saveSettingsForm);
+    els.exportCsvBtn.addEventListener('click', exportCsv);
+    els.exportPdfReportBtn.addEventListener('click', exportMonthlyPdfReport);
+    els.exportImageReportBtn.addEventListener('click', exportMonthlyImageReport);
+    els.exportBackupBtn.addEventListener('click', exportBackup);
+    els.importBackupInput.addEventListener('change', importBackup);
+    els.tableBody.addEventListener('click', handleActionClick);
+    els.mobileCards.addEventListener('click', handleActionClick);
+
+    els.searchInput.addEventListener('input', event => {
+      filters.search = event.target.value;
+      renderRows();
+    });
+    els.periodFilterBtn.addEventListener('click', event => {
+      event.stopPropagation();
+      els.periodPicker.classList.toggle('is-open');
+      document.body.classList.toggle('period-menu-open', els.periodPicker.classList.contains('is-open'));
+
+      if(els.periodPicker.classList.contains('is-open')){
+        positionPeriodMenu();
+        tempRange = { start: filters.startDate || '', end: filters.endDate || '' };
+        setCalendarViewFromRange();
+        renderInlineCalendar();
+      }
+    });
+
+    document.querySelectorAll('.period-option').forEach(button => {
+      button.addEventListener('click', () => {
+        const mode = button.dataset.period;
+
+        if(mode === 'custom'){
+          filters.periodMode = 'custom';
+          document.querySelectorAll('.period-option').forEach(option => {
+            option.classList.toggle('is-selected', option.dataset.period === 'custom');
+          });
+
+          tempRange = { start: filters.startDate || '', end: filters.endDate || '' };
+          setCalendarViewFromRange();
+          renderFilters();
+          renderInlineCalendar();
+          return;
+        }
+
+        setPeriod(mode);
+        els.periodPicker.classList.remove('is-open');
+        document.body.classList.remove('period-menu-open');
+        render();
+      });
+    });
+
+    els.applyCustomPeriodBtn.addEventListener('click', () => {
+      if(!tempRange.start && !tempRange.end){
+        setPeriod('custom', '', '');
+      } else {
+        setPeriod('custom', tempRange.start, tempRange.end || tempRange.start);
+      }
+      els.periodPicker.classList.remove('is-open');
+      document.body.classList.remove('period-menu-open');
+      render();
+    });
+
+    els.clearCustomPeriodBtn.addEventListener('click', () => {
+      tempRange = { start:'', end:'' };
+      setPeriod('custom', '', '');
+      render();
+    });
+
+    els.calendarPrevBtn.addEventListener('click', () => {
+      calendarView = new Date(calendarView.getFullYear(), calendarView.getMonth() - 1, 1);
+      renderInlineCalendar();
+    });
+
+    els.calendarNextBtn.addEventListener('click', () => {
+      calendarView = new Date(calendarView.getFullYear(), calendarView.getMonth() + 1, 1);
+      renderInlineCalendar();
+    });
+
+    document.addEventListener('click', event => {
+      if(!event.target.closest('#periodPicker') && !event.target.closest('#periodMenu')){
+        els.periodPicker.classList.remove('is-open');
+        document.body.classList.remove('period-menu-open');
+      }
+    });
+
+    els.clientFilter.addEventListener('change', event => {
+      filters.client = event.target.value;
+      render();
+    });
+    els.statusFilter.addEventListener('change', event => {
+      filters.status = event.target.value;
+      renderRows();
+    });
+    els.clearFiltersBtn.addEventListener('click', () => {
+      setPeriod('currentMonth');
+      filters.client = 'todos';
+      filters.status = 'todos';
+      filters.search = '';
+      els.searchInput.value = '';
+      els.statusFilter.value = 'todos';
+      els.periodPicker.classList.remove('is-open');
+      document.body.classList.remove('period-menu-open');
+      render();
+    });
+    els.deliveredDateInput.addEventListener('change', () => {
+      if(els.deliveredDateInput.value) els.statusInput.value = 'Entregue';
+    });
+    document.addEventListener('keydown', event => {
+      if(event.key === 'Escape'){
+        closeDemandModal();
+        closeSettingsModal();
+        if(els.periodPicker) els.periodPicker.classList.remove('is-open');
+        document.body.classList.remove('period-menu-open');
+        document.body.classList.remove('period-menu-open');
+      }
+    });
+    els.demandModal.addEventListener('click', event => {
+      if(event.target === els.demandModal) closeDemandModal();
+    });
+    els.settingsModal.addEventListener('click', event => {
+      if(event.target === els.settingsModal) closeSettingsModal();
+    });
+
+
+    function closePeriodMenu(){
+      if(!els.periodMenu || !els.periodPicker || !els.periodFilterBtn) return;
+      els.periodMenu.classList.remove('force-open');
+      els.periodPicker.classList.remove('is-open');
+      els.periodFilterBtn.classList.remove('force-active');
+      document.body.classList.remove('period-menu-open');
+    }
+
+    window.togglePeriodMenu = function(event){
+      if(event){
+        event.preventDefault();
+        event.stopPropagation();
+        if(event.stopImmediatePropagation) event.stopImmediatePropagation();
+      }
+
+      if(!els.periodMenu || !els.periodPicker || !els.periodFilterBtn) return;
+
+      if(els.periodMenu.parentElement !== document.body){
+        document.body.appendChild(els.periodMenu);
+      }
+
+      const willOpen = !els.periodMenu.classList.contains('force-open');
+
+      if(!willOpen){
+        closePeriodMenu();
+        return;
+      }
+
+      els.periodMenu.classList.add('force-open');
+      els.periodPicker.classList.add('is-open');
+      els.periodFilterBtn.classList.add('force-active');
+      document.body.classList.add('period-menu-open');
+
+      positionPeriodMenu();
+      tempRange = { start: filters.startDate || '', end: filters.endDate || '' };
+      setCalendarViewFromRange();
+      renderFilters();
+      renderInlineCalendar();
+    };
+
+    document.addEventListener('click', event => {
+      if(!event.target.closest('#periodMenu') && !event.target.closest('#periodPicker')){
+        closePeriodMenu();
+      }
+    }, true);
+
+    document.querySelectorAll('.period-option').forEach(button => {
+      button.addEventListener('click', () => {
+        if(button.dataset.period !== 'custom'){
+          setTimeout(closePeriodMenu, 0);
+        }
+      });
+    });
+
+    if(els.applyCustomPeriodBtn){
+      els.applyCustomPeriodBtn.addEventListener('click', () => {
+        setTimeout(closePeriodMenu, 0);
+      });
+    }
+
+    setPeriod('currentMonth');
+    initCustomSelects();
+    window.addEventListener('resize', () => {
+      if(els.periodPicker.classList.contains('is-open')) positionPeriodMenu();
+    });
+
+    window.addEventListener('scroll', () => {
+      if(els.periodPicker.classList.contains('is-open')) positionPeriodMenu();
+    }, true);
+
+    render();
+  </script>
+</body>
+</html>
